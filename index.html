@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-FGJKFCXXEE"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-FGJKFCXXEE");
+    </script>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -30,8 +44,11 @@
           location.
         </li>
         <li>
-          Rewards in USD as given by [HNT oracle
-          price](https://engineering.helium.com/2020/05/29/HNT-Price-Oracles.html#hnt-price-oracles)
+          Rewards in USD as given by
+          <a
+            href="https://engineering.helium.com/2020/05/29/HNT-Price-Oracles.html#hnt-price-oracles"
+            >HNT oracle price</a
+          >
           at time of reward.
         </li>
       </ol>
@@ -57,5 +74,14 @@
         <span id="current">test</span>
       </div>
     </main>
+
+    <footer>
+      Questions, comments, issues? Please ask
+      <a
+        href="https://github.com/davetapley/helium-tax/discussions"
+        target="_new"
+        >here</a
+      >.
+    </footer>
   </body>
 </html>
