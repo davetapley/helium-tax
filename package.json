@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@helium/http": "^3.19.0",
-    "geo-tz": "^6.0.1",
-    "moment-timezone": "^0.5.32"
-  }
-}
