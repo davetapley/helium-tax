@@ -7,6 +7,8 @@ const current = document.querySelector("#current");
 form.addEventListener("submit", event => {
   event.preventDefault();
 
+  gtag('event', 'submit')
+
   const cb = ({ found, done }) => {
     console.log(found, done)
     current.innerHTML = `${done} / ${found} transactions`
