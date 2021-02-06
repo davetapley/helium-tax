@@ -1,36 +1,34 @@
+const express = require("express");
+const app = express();
+
 const geoTz = require('geo-tz')
 const moment = require('moment-timezone')
 const { Client } = require('@helium/http')
 const client = new Client()
 
-const url = new URL(event.url)
-const address = url.pathname.slice(1)
-let body = ""
-
-const f = async () => {
+const taxes = async (address) => {
+  console.log("taxes", address)
   const hotspot = await client.hotspots.get(address)
   const { name, lat, lng } = hotspot
-  body += 'Hotspot,' + name
 
   const tz = geoTz(lat, lng)[0]
-  body += "\nAssumed timezone," + tz + "\n\n"
   moment.tz.setDefault(tz);
+  console.log("tz", tz)
 
-  const minTime = moment({ year: 2020 }).toDate()
-  const maxTime = moment(minTime).endOf('year').toDate()
-
-  body += "\n,HNT rewarded,HNT/USD,USD rewarded\n"
-
+  const minTime = moment({ year: 2021 }).toDate()
+  const maxTime = moment(minTime).endOf('day').toDate()
+  
   const getAmount = async ({ amount: { floatBalance, type: { ticker } }, timestamp, block }) => {
     if (ticker !== "HNT") throw "can't handle " + ticker
-
     const oraclePrice = await client.oracle.getPriceAtBlock(block)
+    
     const { floatBalance: hntFloatBalance, type: { ticker: hntTicker } } = oraclePrice.price
     if (hntTicker !== "USD") throw "can't handle HNT ticker " + hntTicker
 
     const time = moment(timestamp).format();
     const reward = floatBalance * hntFloatBalance
-    return [time, floatBalance, hntFloatBalance, reward]
+    console.log(time, reward)
+    return {time, reward}
   }
 
   const params = { minTime, maxTime }
@@ -41,18 +39,25 @@ const f = async () => {
   while (page.hasMore) {
     page = await page.nextPage()
     const newAmounts = await Promise.all(page.data.map(getAmount))
+    console.log("amount", amounts.length)
+
     amounts.push(...newAmounts)
   }
 
-  body += amounts.reverse().map((row) => row.join(",")).join("\n")
-  const headers = { 
-    'Content-disposition': 'attachment; filename=' + name + '.csv',
-    'Content-Type': 'text/csv' }
-  $respond({ status: 200, headers, body })
+  return {name, tz, amounts}
 }
 
-if(address.length > 0 && address !== 'favicon.ico') {
-  await f()
-} else {
-  $respond({status: 404})
-}
+app.use(express.static("public"));
+
+app.get("/", (request, response) => {
+  response.sendFile(__dirname + "/views/index.html");
+});
+
+app.get("/taxes/:address", async (request, response) => {
+  const foo = await taxes(request.params.address)
+  response.send(foo)
+});
+
+const listener = app.listen(process.env.PORT, () => {
+  console.log("Your app is listening on port " + listener.address().port);
+});
