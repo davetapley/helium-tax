@@ -2,22 +2,28 @@ const tax = require('./tax')
 
 const form = document.querySelector("form");
 const progress = document.querySelector("#progress");
-const current = document.querySelector("#current");
+const warning = document.querySelector("#warning");
 
 form.addEventListener("submit", event => {
   event.preventDefault();
 
   gtag('event', 'submit')
 
-  const cb = ({ found, done }) => {
+  const progressCB = ({ found, done }) => {
     console.log(found, done)
-    current.innerHTML = `${done} / ${found} transactions`
+    progress.innerHTML = `${done} / ${found} transactions`
+  }
+
+  const warningCB = (message) => {
+    const li = document.createElement("li");
+    li.appendChild(document.createTextNode(message)); 
+    warning.appendChild(li)
   }
 
   const address = form.elements.address.value;
-  tax(address, cb).then(({ name, rows }) => {
+  tax(address, progressCB, warningCB).then(({ name, rows }) => {
     progress.classList.add('done')
-    current.innerHTML += ' ✅'
+    progress.innerHTML += ' ✅'
 
     const header = `${Object.keys(rows[0]).join(',')}\n`
     const values = rows.reverse().map((row) => `${Object.values(row).join(',')}\n`)
