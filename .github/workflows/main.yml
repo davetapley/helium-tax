@@ -15,6 +15,7 @@ jobs:
           mkdir build
           cp index.html build/
           cp style.css build/
+          cp tip-qr.png build/
           npx browserify index.js -o build/index.js
 
       - name: Deploy 🚀
