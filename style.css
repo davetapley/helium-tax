@@ -6,7 +6,10 @@
   a {
     color: greenyellow;
   }
-}
+  input, button{
+    background-color: black;
+    color: white
+}}
 
 #progress {
   padding-top: 1rem;
