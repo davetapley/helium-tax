@@ -17751,8 +17751,8 @@ const taxes = async (address, cb) => {
   moment.tz.setDefault(tz);
   console.log("tz", tz)
 
-  const minTime = moment({ year: 2021 }).toDate()
-  const maxTime = moment(minTime).endOf('day').toDate()
+  const minTime = moment({ year: 2020 }).toDate()
+  const maxTime = moment(minTime).endOf('year').toDate()
 
   let found = 0
   let done = 0
