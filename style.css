@@ -6,10 +6,12 @@
   a {
     color: greenyellow;
   }
-  input, button{
+  input,
+  button {
     background-color: black;
-    color: white
-}}
+    color: white;
+  }
+}
 
 #progress {
   padding-top: 1rem;
@@ -23,6 +25,12 @@
 
 #progress.done > .loader {
   display: none;
+}
+
+#warning > li:before {
+  content: "⚠️";
+  margin-left: -20px;
+  margin-right: 10px;
 }
 
 .loader {
