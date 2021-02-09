@@ -15,11 +15,13 @@ form.addEventListener("submit", event => {
   }
 
   const address = form.elements.address.value;
-  tax(address, cb).then(({ name, amounts }) => {
+  tax(address, cb).then(({ name, rows }) => {
     progress.classList.add('done')
     current.innerHTML += ' ✅'
 
-    const csv = amounts.reverse().map(({ time, reward }) => `${time},${reward}\n`)
+    const header = `${Object.keys(rows[0]).join(',')}\n`
+    const values = rows.reverse().map((row) => `${Object.values(row).join(',')}\n`)
+    const csv = [header].concat(values)
     var a = window.document.createElement('a');
     a.style.display = 'none';
     a.href = window.URL.createObjectURL(new Blob(csv, { type: 'text/csv' }));
