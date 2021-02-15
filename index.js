@@ -739,11 +739,13 @@ form.addEventListener("submit", event => {
   const warningCB = (message) => {
     const li = document.createElement("li");
     li.appendChild(document.createTextNode(message)); 
+    gtag('event', 'warn')
     warning.appendChild(li)
   }
 
   const address = form.elements.address.value;
   tax(address, progressCB, warningCB).then(({ name, rows }) => {
+    gtag('event', 'success')
     progress.classList.add('done')
     progress.innerHTML += ' ✅'
 
