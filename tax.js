@@ -1,4 +1,3 @@
-const geoTz = require('geo-tz')
 const moment = require('moment-timezone')
 const { Client } = require('@helium/http')
 const client = new Client()
@@ -12,7 +11,8 @@ const taxes = async (address, progress, warning) => {
     const hotspot = await client.hotspots.get(address)
     const { name, lat, lng } = hotspot
 
-    const tz = geoTz(lat, lng)[0]
+    const tzFetch = await fetch(`https://enz4qribbjb5c4.m.pipedream.net?lat=${lat}&lng=${lng}`)
+    const tz = await tzFetch.text()
     moment.tz.setDefault(tz);
     console.log("tz", tz)
 
@@ -66,7 +66,7 @@ const taxes = async (address, progress, warning) => {
     return { name, tz, rows }
   } catch (e) {
     warning(`hotspot-${e.response.status}`, "Couldn't find hotspot, use address (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
-    throw(e)
+    throw (e)
   }
 }
 
