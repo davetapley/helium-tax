@@ -8,7 +8,11 @@ let warnedFirstOracle = false
 
 const taxes = async (address, progress, warning) => {
   console.log("taxes", address)
-  const hotspot = await client.hotspots.get(address)
+  try {
+    const hotspot = await client.hotspots.get(address)
+  } catch (e) {
+    warning(`hotspot-${e.response.status}`, "Couldn't find hotspot with address")
+  }
   const { name, lat, lng } = hotspot
 
   const tz = geoTz(lat, lng)[0]
