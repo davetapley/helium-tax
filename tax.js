@@ -65,7 +65,7 @@ const taxes = async (address, progress, warning) => {
 
     return { name, tz, rows }
   } catch (e) {
-    warning(`hotspot-${e.response.status}`, "Couldn't find hotspot")
+    warning(`hotspot-${e.response.status}`, "Couldn't find hotspot, use address (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
     throw(e)
   }
 }
