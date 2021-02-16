@@ -16,7 +16,7 @@ form.addEventListener("submit", event => {
 
   const warningCB = (kind, message) => {
     const li = document.createElement("li");
-    li.appendChild(document.createTextNode(message)); 
+    li.appendChild(document.createTextNode(message));
     gtag('event', kind)
     warning.appendChild(li)
   }
@@ -24,7 +24,6 @@ form.addEventListener("submit", event => {
   const address = form.elements.address.value;
   tax(address, progressCB, warningCB).then(({ name, rows }) => {
     gtag('event', 'success')
-    progress.classList.add('done')
     progress.innerHTML += ' ✅'
 
     const header = `${Object.keys(rows[0]).join(',')}\n`
@@ -37,6 +36,8 @@ form.addEventListener("submit", event => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  }).finally(() => {
+    progress.classList.add('done')
   })
   progress.classList.add('active')
 })
