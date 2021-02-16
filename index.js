@@ -14,10 +14,10 @@ form.addEventListener("submit", event => {
     progress.innerHTML = `${done} / ${found} transactions`
   }
 
-  const warningCB = (message) => {
+  const warningCB = (kind, message) => {
     const li = document.createElement("li");
     li.appendChild(document.createTextNode(message)); 
-    gtag('event', 'warn')
+    gtag('event', kind)
     warning.appendChild(li)
   }
 

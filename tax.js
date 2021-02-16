@@ -31,7 +31,7 @@ const taxes = async (address, progress, warning) => {
 
     if (time < firstOracle) {
       if (!warnedFirstOracle) {
-        warning(`Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
+        warning('no_oracle', `Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
         warnedFirstOracle = true
       }
 
