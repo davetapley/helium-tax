@@ -1,7 +1,19 @@
 {
-  "dependencies": {
-    "@helium/http": "^3.19.0",
+  "name": "helium-tax",
+  "description": "Calculate Helium hotspot USD income (useful for taxes).",
+  "homepage": "https://github.com/davetapley/helium-tax",
+  "license": "https://github.com/davetapley/helium-tax/blob/main/LICENSE",
+  "repository": {
+    "url": "https://github.com/davetapley/helium-tax"
+  },
+  "scripts": {
+    "start": "browserify index.js -o bundle.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@helium/http": "^3.32.0",
+    "browserify": "^17.0.0",
     "geo-tz": "^6.0.1",
-    "moment-timezone": "^0.5.32"
+    "moment-timezone": "^0.5.33"
   }
 }

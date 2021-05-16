@@ -1,149 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-FGJKFCXXEE"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
 
-      gtag("config", "G-FGJKFCXXEE");
-    </script>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Helium HNT USD Tax tool" />
+<head>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FGJKFCXXEE"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
 
-    <title>helium-tax</title>
+    gtag("config", "G-FGJKFCXXEE");
+  </script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Helium HNT USD Tax tool" />
 
-    <link rel="stylesheet" href="style.css" />
-    <script src="index.js" defer></script>
-  </head>
-  <body>
-    <header>
-      <h1>helium-tax</h1>
-    </header>
+  <title>helium-tax</title>
 
-    <main>
-      <div id="tip-float">
-        <p>
-          <b>Tips welcome!</b> If you found this useful tip me some (<i>suggested 5</i>) HNT to
-          <br /><code>13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code
-          ><br />
-          or scan this code in the Helium app:
-        </p>
-        <img
-          src="tip-qr.png"
-          alt="13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z"
-        />
-      </div>
+  <link rel="stylesheet" href="style.css" />
+  <script src="bundle.js" defer></script>
+</head>
+
+<body>
+  <header>
+    <h1>helium-tax</h1>
+  </header>
+
+  <main>
+    <div id="tip-float">
       <p>
-        Calculate Helium hotspot USD income in 2020 (useful for taxes,
-        <a href="https://www.irs.gov/irb/2014-16_IRB#NOT-2014-21" target="_blank"
-          >see <b>Q-8</b> here</a
-        >). <br />Uses 2020 as defined by location of hotspot's most recently
-        asserted location.
-      </p>
-
-      <p>Will download a .csv whose first two columns are:</p>
-      <ol>
-        <li>
-          Time of reward in time zone of hotspot's most recently asserted
-          location.
-        </li>
-        <li>
-          Rewards in USD as given by
-          <a
-            href="https://engineering.helium.com/2020/05/29/HNT-Price-Oracles.html#hnt-price-oracles"
-            >HNT oracle price</a
-          >
-          at time of reward.
-        </li>
-      </ol>
-
-      <p>
-        Enter your hotspot network address (<i
-          ><a href="https://explorer.helium.com/hotspots" target="_blank"
-            >find it here</a
-          >):
-        </i>
-      </p>
-
-      <form>
-        <input
-          name="address"
-          type="text"
-          maxlength="100"
-          required
-          placeholder="Hot spot address"
-        />
-        <button type="submit" name="submit">Do some taxes</button>
-      </form>
-
-      <div id="progress">
-        <div class="loader"></div>
-        <span id="current"></span>
-      </div>
-
-      <div>
-        <ul id="warning"></ul>
-      </div>
-
-      <p id="tip-block">
         <b>Tips welcome!</b> If you found this useful tip me some (<i>suggested 5</i>) HNT to
-        <br /><code>13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code>.
+        <br /><code>13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code><br />
+        or scan this code in the Helium app:
+      </p>
+      <img src="tip-qr.png" alt="13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z" />
+    </div>
+    <p>
+      Calculate Helium hotspot USD income in 2020 (useful for taxes,
+      <a href="https://www.irs.gov/irb/2014-16_IRB#NOT-2014-21" target="_blank">see <b>Q-8</b> here</a>). <br />Uses
+      2020 as defined by location of hotspot's most recently
+      asserted location.
+    </p>
+
+    <p>Will download a .csv whose first two columns are:</p>
+    <ol>
+      <li>
+        Time of reward in time zone of hotspot's most recently asserted
+        location.
+      </li>
+      <li>
+        Rewards in USD as given by
+        <a href="https://engineering.helium.com/2020/05/29/HNT-Price-Oracles.html#hnt-price-oracles">HNT oracle
+          price</a>
+        at time of reward.
+      </li>
+    </ol>
+
+    <p>
+      Enter your hotspot network address (<i><a href="https://explorer.helium.com/hotspots" target="_blank">find it
+          here</a>):
+      </i>
+    </p>
+
+    <form>
+      <input name="address" type="text" maxlength="100" required placeholder="Hot spot address" />
+      <button type="submit" name="submit">Do some taxes</button>
+    </form>
+
+    <div id="progress">
+      <div class="loader"></div>
+      <span id="current"></span>
+    </div>
+
+    <div>
+      <ul id="warning"></ul>
+    </div>
+
+    <p id="tip-block">
+      <b>Tips welcome!</b> If you found this useful tip me some (<i>suggested 5</i>) HNT to
+      <br /><code>13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code>.
+    </p>
+
+    <p>
+      Questions, comments, issues? Please ask
+      <a href="https://github.com/davetapley/helium-tax/discussions" target="_blank">here</a>.
+    </p>
+  </main>
+
+  <footer>
+    <small>
+      <p>Copyright 2021 Dave Tapley</p>
+
+      <p>
+        Permission is hereby granted, free of charge, to any person obtaining
+        a copy of this software and associated documentation files (the
+        "Software"), to deal in the Software without restriction, including
+        without limitation the rights to use, copy, modify, merge, publish,
+        distribute, sublicense, and/or sell copies of the Software, and to
+        permit persons to whom the Software is furnished to do so, subject to
+        the following conditions:
       </p>
 
       <p>
-        Questions, comments, issues? Please ask
-        <a
-          href="https://github.com/davetapley/helium-tax/discussions"
-          target="_blank"
-          >here</a
-        >.
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
       </p>
-    </main>
 
-    <footer>
-      <small>
-        <p>Copyright 2021 Dave Tapley</p>
+      <p>
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+        TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+      </p>
 
-        <p>
-          Permission is hereby granted, free of charge, to any person obtaining
-          a copy of this software and associated documentation files (the
-          "Software"), to deal in the Software without restriction, including
-          without limitation the rights to use, copy, modify, merge, publish,
-          distribute, sublicense, and/or sell copies of the Software, and to
-          permit persons to whom the Software is furnished to do so, subject to
-          the following conditions:
-        </p>
+      aka
+      <a href="https://github.com/davetapley/helium-tax/blob/main/LICENSE">MIT License</a>.
+    </small>
+  </footer>
+</body>
 
-        <p>
-          The above copyright notice and this permission notice shall be
-          included in all copies or substantial portions of the Software.
-        </p>
-
-        <p>
-          THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-          EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-          MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-          IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-          CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-          TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-          SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-        </p>
-
-        aka
-        <a href="https://github.com/davetapley/helium-tax/blob/main/LICENSE"
-          >MIT License</a
-        >.
-      </small>
-    </footer>
-  </body>
 </html>
