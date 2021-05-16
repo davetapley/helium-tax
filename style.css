@@ -6,8 +6,7 @@
   a {
     color: greenyellow;
   }
-  input,
-  button {
+  input, button {
     background-color: black;
     color: white;
   }
@@ -23,19 +22,21 @@
   visibility: visible;
 }
 
-#progress.done > .loader {
+#progress.done>.loader {
   display: none;
 }
 
-#warning > li:before {
+#warning>li:before {
   content: "⚠️";
   margin-left: -20px;
   margin-right: 10px;
 }
 
 .loader {
-  border: 2px solid #f3f3f3; /* Light grey */
-  border-top: 2px solid #3498db; /* Blue */
+  border: 2px solid #f3f3f3;
+  /* Light grey */
+  border-top: 2px solid #3498db;
+  /* Blue */
   border-radius: 50%;
   width: 10px;
   height: 10px;
@@ -51,6 +52,7 @@
     transform: rotate(360deg);
   }
 }
+
 @media (min-width: 801px) {
   footer {
     position: fixed;

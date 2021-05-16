@@ -23,8 +23,9 @@
     <title>helium-tax</title>
 
     <link rel="stylesheet" href="style.css" />
-    <script src="index.js" defer></script>
+    <script src="bundle.js" defer></script>
   </head>
+
   <body>
     <header>
       <h1>helium-tax</h1>
@@ -33,8 +34,10 @@
     <main>
       <div id="tip-float">
         <p>
-          <b>Tips welcome!</b> If you found this useful tip me some (<i>suggested 5</i>) HNT to
-          <br /><code>13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code
+          <b>Tips welcome!</b> If you found this useful tip me some (<i
+            >suggested 5</i
+          >) HNT to <br /><code
+            >13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code
           ><br />
           or scan this code in the Helium app:
         </p>
@@ -45,7 +48,9 @@
       </div>
       <p>
         Calculate Helium hotspot USD income in 2020 (useful for taxes,
-        <a href="https://www.irs.gov/irb/2014-16_IRB#NOT-2014-21" target="_blank"
+        <a
+          href="https://www.irs.gov/irb/2014-16_IRB#NOT-2014-21"
+          target="_blank"
           >see <b>Q-8</b> here</a
         >). <br />Uses 2020 as defined by location of hotspot's most recently
         asserted location.
@@ -83,6 +88,11 @@
           required
           placeholder="Hot spot address"
         />
+        <select name="year">
+          <option value="2020">2020</option>
+          <option value="2021">2021</option>
+          <option value="All">All</option>
+        </select>
         <button type="submit" name="submit">Do some taxes</button>
       </form>
 
@@ -96,8 +106,11 @@
       </div>
 
       <p id="tip-block">
-        <b>Tips welcome!</b> If you found this useful tip me some (<i>suggested 5</i>) HNT to
-        <br /><code>13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code>.
+        <b>Tips welcome!</b> If you found this useful tip me some (<i
+          >suggested 5</i
+        >) HNT to <br /><code
+          >13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code
+        >.
       </p>
 
       <p>
