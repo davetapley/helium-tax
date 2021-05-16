@@ -16,7 +16,7 @@ jobs:
           cp index.html build/
           cp style.css build/
           cp tip-qr.png build/
-          npx browserify index.js -o build/index.js
+          npx browserify index.js -o build/bundle.js
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@3.7.1
