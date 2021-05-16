@@ -9,8 +9,8 @@ form.addEventListener("submit", event => {
 
   gtag('event', 'submit')
 
-  const progressCB = ({ transactionsDoneCount }) => {
-    progress.innerHTML = `${transactionsDoneCount} transactions`
+  const progressCB = ({ transactionsDoneCount, usdSum }) => {
+    progress.innerHTML = `${transactionsDoneCount} transactions / $${usdSum.toFixed(2)} income`
   }
 
   const warningCB = (kind, message) => {

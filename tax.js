@@ -20,31 +20,37 @@ const taxes = async (address, year, progress, warning) => {
     const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
     let transactionsDoneCount = 0
-    progress({ transactionsDoneCount })
+    let usdSum = 0
+    progress({ transactionsDoneCount, usdSum })
 
     const getRow = async (data) => {
       const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
       if (ticker !== "HNT") throw "can't handle " + ticker
 
       const time = moment(timestamp)
-      progress({ transactionsDoneCount : transactionsDoneCount += 1 })
 
+      let row = {}
       if (time < firstOracle) {
         if (!warnedFirstOracle) {
           warning('no_oracle', `Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
           warnedFirstOracle = true
         }
 
-        return { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
+        row = { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
       } else {
         const oraclePrice = await client.oracle.getPriceAtBlock(block)
         const { floatBalance: price, type: { ticker: hntTicker } } = oraclePrice.price
         if (hntTicker !== "USD") throw "can't handle HNT ticker " + hntTicker
 
         const usd = hnt * price
-        return { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
+        row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
       }
 
+      transactionsDoneCount += 1 
+      usdSum += row.usd == '' ? 0: row.usd
+      progress({ transactionsDoneCount, usdSum })
+
+      return row
     }
 
     const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
@@ -54,7 +60,6 @@ const taxes = async (address, year, progress, warning) => {
 
     while (page.hasMore) {
       page = await page.nextPage()
-      console.log("amount", page.data.length)
       const newRows = await Promise.all(page.data.map(getRow))
 
       rows.push(...newRows)
