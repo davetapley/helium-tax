@@ -10,9 +10,8 @@ form.addEventListener("submit", event => {
 
   gtag('event', 'submit')
 
-  const progressCB = ({ found, done }) => {
-    console.log(found, done)
-    progress.innerHTML = `${done} / ${found} transactions`
+  const progressCB = ({ transactionsDoneCount }) => {
+    progress.innerHTML = `${transactionsDoneCount} transactions`
   }
 
   const warningCB = (kind, message) => {
@@ -16267,16 +16266,15 @@ const taxes = async (address, year, progress, warning) => {
     const minTime = year === "All" ? moment(0) : moment({ year })
     const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
-    let found = 0
-    let done = 0
-    progress({ found, done })
+    let transactionsDoneCount = 0
+    progress({ transactionsDoneCount })
 
     const getRow = async (data) => {
       const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
       if (ticker !== "HNT") throw "can't handle " + ticker
 
       const time = moment(timestamp)
-      progress({ found, done: done += 1 })
+      progress({ transactionsDoneCount : transactionsDoneCount += 1 })
 
       if (time < firstOracle) {
         if (!warnedFirstOracle) {
@@ -16299,13 +16297,12 @@ const taxes = async (address, year, progress, warning) => {
     const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
     const rewards = client.hotspot(address).rewards.list(params)
     let page = await rewards
-    progress({ done, found: found += page.data.length })
+    console.log(page.data[0])
     const rows = await Promise.all(page.data.map(getRow))
 
     while (page.hasMore) {
       page = await page.nextPage()
       console.log("amount", page.data.length)
-      progress({ done, found: found += page.data.length })
       const newRows = await Promise.all(page.data.map(getRow))
 
       rows.push(...newRows)
