@@ -22,7 +22,8 @@ form.addEventListener("submit", event => {
   }
 
   const address = form.elements.address.value;
-  tax(address, progressCB, warningCB).then(({ name, rows }) => {
+  const year = form.elements.year.value;
+  tax(address, year, progressCB, warningCB).then(({ name, rows }) => {
     gtag('event', 'success')
     progress.innerHTML += ' ✅'
 

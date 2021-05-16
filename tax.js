@@ -5,8 +5,8 @@ const client = new Client()
 const firstOracle = moment({ year: 2020, month: 05, day: 10 })
 let warnedFirstOracle = false
 
-const taxes = async (address, progress, warning) => {
-  console.log("taxes", address)
+const taxes = async (address, year, progress, warning) => {
+  console.log("taxes", address, year)
   try {
     const hotspot = await client.hotspots.get(address)
     const { name, lat, lng } = hotspot
@@ -16,8 +16,8 @@ const taxes = async (address, progress, warning) => {
     moment.tz.setDefault(tz);
     console.log("tz", tz)
 
-    const minTime = moment({ year: 2020 }).toDate()
-    const maxTime = moment(minTime).endOf('year').toDate()
+    const minTime = year === "All" ? moment(0) : moment({ year })
+    const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
     let found = 0
     let done = 0
@@ -48,7 +48,7 @@ const taxes = async (address, progress, warning) => {
 
     }
 
-    const params = { minTime, maxTime }
+    const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
     const rewards = client.hotspot(address).rewards.list(params)
     let page = await rewards
     progress({ done, found: found += page.data.length })
@@ -65,6 +65,7 @@ const taxes = async (address, progress, warning) => {
 
     return { name, tz, rows }
   } catch (e) {
+    console.log(e)
     warning(`hotspot-${e.response.status}`, "Couldn't find hotspot, use address (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
     throw (e)
   }

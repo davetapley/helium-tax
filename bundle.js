@@ -23,7 +23,8 @@ form.addEventListener("submit", event => {
   }
 
   const address = form.elements.address.value;
-  tax(address, progressCB, warningCB).then(({ name, rows }) => {
+  const year = form.elements.year.value;
+  tax(address, year, progressCB, warningCB).then(({ name, rows }) => {
     gtag('event', 'success')
     progress.innerHTML += ' ✅'
 
@@ -43,7 +44,7 @@ form.addEventListener("submit", event => {
   progress.classList.add('active')
 })
 
-},{"./tax":95}],2:[function(require,module,exports){
+},{"./tax":96}],2:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -157,7 +158,7 @@ class Balance {
 }
 exports.default = Balance;
 
-},{"./CurrencyType":3,"./Errors":4,"./currency_types":10,"bignumber.js":68}],3:[function(require,module,exports){
+},{"./CurrencyType":3,"./Errors":4,"./currency_types":10,"bignumber.js":69}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const currency_types_1 = require("./currency_types");
@@ -209,7 +210,7 @@ class BaseCurrencyType {
 }
 exports.default = BaseCurrencyType;
 
-},{"bignumber.js":68}],6:[function(require,module,exports){
+},{"bignumber.js":69}],6:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -420,7 +421,7 @@ class Client {
 }
 exports.default = Client;
 
-},{"./Network":13,"./resources/Accounts":27,"./resources/Blocks":28,"./resources/Challenges":29,"./resources/Cities":30,"./resources/Elections":31,"./resources/Hotspots":32,"./resources/Oracle":33,"./resources/PendingTransactions":34,"./resources/Stats":36,"./resources/Transactions":38,"./resources/Vars":39,"axios":41,"qs":88,"retry-axios":93}],13:[function(require,module,exports){
+},{"./Network":13,"./resources/Accounts":28,"./resources/Blocks":29,"./resources/Challenges":30,"./resources/Cities":31,"./resources/Elections":32,"./resources/Hotspots":33,"./resources/Oracle":34,"./resources/PendingTransactions":35,"./resources/Stats":37,"./resources/Transactions":39,"./resources/Vars":40,"axios":42,"qs":89,"retry-axios":94}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Network {
@@ -636,7 +637,7 @@ class Account extends DataModel_1.default {
 }
 exports.default = Account;
 
-},{"../resources/Challenges":29,"../resources/Hotspots":32,"../resources/PendingTransactions":34,"../resources/Rewards":35,"../resources/Transactions":38,"./DataModel":20,"@helium/currency":11}],17:[function(require,module,exports){
+},{"../resources/Challenges":30,"../resources/Hotspots":33,"../resources/PendingTransactions":35,"../resources/Rewards":36,"../resources/Transactions":39,"./DataModel":20,"@helium/currency":11}],17:[function(require,module,exports){
 "use strict";
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
@@ -676,7 +677,7 @@ class Block extends DataModel_1.default {
 }
 exports.default = Block;
 
-},{"../resources/Transactions":38,"./DataModel":20}],18:[function(require,module,exports){
+},{"../resources/Transactions":39,"./DataModel":20}],18:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -821,7 +822,7 @@ class City extends DataModel_1.default {
 }
 exports.default = City;
 
-},{"../resources/Hotspots":32,"./DataModel":20}],20:[function(require,module,exports){
+},{"../resources/Hotspots":33,"./DataModel":20}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GenericDataModel = void 0;
@@ -889,6 +890,7 @@ const Rewards_1 = __importDefault(require("../resources/Rewards"));
 const Challenges_1 = __importDefault(require("../resources/Challenges"));
 class Hotspot extends DataModel_1.default {
     constructor(client, hotspot) {
+        var _a, _b, _c, _d;
         super();
         this.client = client;
         this.scoreUpdateHeight = hotspot.score_update_height;
@@ -900,8 +902,14 @@ class Hotspot extends DataModel_1.default {
         this.lng = hotspot.lng;
         this.lat = hotspot.lat;
         this.block = hotspot.block;
-        this.status = hotspot.status;
+        this.status = {
+            gps: ((_a = hotspot.status) === null || _a === void 0 ? void 0 : _a.gps) || '',
+            height: ((_b = hotspot.status) === null || _b === void 0 ? void 0 : _b.height) || 0,
+            online: ((_c = hotspot.status) === null || _c === void 0 ? void 0 : _c.online) || '',
+            listenAddrs: ((_d = hotspot.status) === null || _d === void 0 ? void 0 : _d.listen_addrs) || [],
+        };
         this.nonce = hotspot.nonce;
+        this.speculativeNonce = hotspot.speculative_nonce;
         this.blockAdded = hotspot.block_added;
         this.timestampAdded = hotspot.timestamp_added;
         this.lastPocChallenge = hotspot.last_poc_challenge;
@@ -933,7 +941,7 @@ class Hotspot extends DataModel_1.default {
 }
 exports.default = Hotspot;
 
-},{"../resources/Challenges":29,"../resources/Rewards":35,"../resources/Transactions":38,"../resources/Witnesses":40,"./DataModel":20,"camelcase-keys":72}],23:[function(require,module,exports){
+},{"../resources/Challenges":30,"../resources/Rewards":36,"../resources/Transactions":39,"../resources/Witnesses":41,"./DataModel":20,"camelcase-keys":73}],23:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -973,7 +981,7 @@ class PendingTransaction extends DataModel_1.default {
 }
 exports.default = PendingTransaction;
 
-},{"./DataModel":20,"@helium/currency":11,"camelcase-keys":72}],24:[function(require,module,exports){
+},{"./DataModel":20,"@helium/currency":11,"camelcase-keys":73}],24:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1311,7 +1319,64 @@ class Transaction {
 }
 exports.default = Transaction;
 
-},{"./Challenge":18,"./DataModel":20,"@helium/currency":11,"camelcase-keys":72}],27:[function(require,module,exports){
+},{"./Challenge":18,"./DataModel":20,"@helium/currency":11,"camelcase-keys":73}],27:[function(require,module,exports){
+"use strict";
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const camelcase_keys_1 = __importDefault(require("camelcase-keys"));
+const DataModel_1 = __importDefault(require("./DataModel"));
+class Witness extends DataModel_1.default {
+    constructor(client, witness) {
+        super();
+        this.client = client;
+        this.scoreUpdateHeight = witness.score_update_height;
+        this.score = witness.score;
+        this.rewardScale = witness.reward_scale;
+        this.owner = witness.owner;
+        this.name = witness.name;
+        this.location = witness.location;
+        this.lng = witness.lng;
+        this.lat = witness.lat;
+        this.block = witness.block;
+        this.status = witness.status;
+        this.nonce = witness.nonce;
+        this.blockAdded = witness.block_added;
+        this.timestampAdded = witness.timestamp_added;
+        this.lastPocChallenge = witness.last_poc_challenge;
+        this.lastChangeBlock = witness.last_change_block;
+        this.gain = witness.gain;
+        this.elevation = witness.elevation;
+        if (witness.geocode) {
+            this.geocode = camelcase_keys_1.default(witness.geocode);
+        }
+        this.address = witness.address;
+        this.witnessFor = witness.witness_for;
+        if (witness.witness_info) {
+            this.witnessInfo = camelcase_keys_1.default(witness.witness_info);
+        }
+    }
+    get data() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _a = this, { client } = _a, rest = __rest(_a, ["client"]);
+        return Object.assign({}, rest);
+    }
+}
+exports.default = Witness;
+
+},{"./DataModel":20,"camelcase-keys":73}],28:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1365,7 +1430,7 @@ class Accounts {
 }
 exports.default = Accounts;
 
-},{"../ResourceList":14,"../models/Account":16}],28:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Account":16}],29:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1427,7 +1492,7 @@ class Blocks {
 }
 exports.default = Blocks;
 
-},{"../ResourceList":14,"../models/Block":17,"camelcase-keys":72}],29:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Block":17,"camelcase-keys":73}],30:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1491,7 +1556,7 @@ class Challenges {
 }
 exports.default = Challenges;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Challenge":18,"../models/Hotspot":22,"./Sums":37}],30:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Account":16,"../models/Challenge":18,"../models/Hotspot":22,"./Sums":38}],31:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1516,7 +1581,7 @@ class Cities {
 }
 exports.default = Cities;
 
-},{"../ResourceList":14,"../models/City":19}],31:[function(require,module,exports){
+},{"../ResourceList":14,"../models/City":19}],32:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1544,7 +1609,7 @@ class Elections {
 }
 exports.default = Elections;
 
-},{"../ResourceList":14,"../models/Election":21}],32:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Election":21}],33:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1584,10 +1649,6 @@ class Hotspots {
             const city = this.context;
             url = `/cities/${city.cityId}/hotspots`;
         }
-        if (this.context instanceof Hotspot_1.default) {
-            const hotspot = this.context;
-            url = `/hotspots/${hotspot.address}/witnesses`;
-        }
         const response = await this.client.get(url, { cursor: params.cursor });
         const { data: { data: hotspots, cursor }, } = response;
         return { hotspots, cursor };
@@ -1607,7 +1668,7 @@ class Hotspots {
 }
 exports.default = Hotspots;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/City":19,"../models/Hotspot":22}],33:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Account":16,"../models/City":19,"../models/Hotspot":22}],34:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const currency_1 = require("@helium/currency");
@@ -1640,7 +1701,7 @@ class Oracle {
 }
 exports.default = Oracle;
 
-},{"@helium/currency":11}],34:[function(require,module,exports){
+},{"@helium/currency":11}],35:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1678,7 +1739,7 @@ class PendingTransactions {
 }
 exports.default = PendingTransactions;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/PendingTransaction":23}],35:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Account":16,"../models/PendingTransaction":23}],36:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1743,7 +1804,7 @@ class Rewards {
 }
 exports.default = Rewards;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Hotspot":22,"../models/Reward":24,"./Sums":37}],36:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Account":16,"../models/Hotspot":22,"../models/Reward":24,"./Sums":38}],37:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1767,7 +1828,7 @@ class Stats {
 }
 exports.default = Stats;
 
-},{"camelcase-keys":72}],37:[function(require,module,exports){
+},{"camelcase-keys":73}],38:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1827,7 +1888,7 @@ class Sums {
 }
 exports.default = Sums;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Hotspot":22,"../models/Sum":25}],38:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Account":16,"../models/Hotspot":22,"../models/Sum":25}],39:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1904,7 +1965,7 @@ class Transactions {
 }
 exports.default = Transactions;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Block":17,"../models/Hotspot":22,"../models/PendingTransaction":23,"../models/Transaction":26}],39:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Account":16,"../models/Block":17,"../models/Hotspot":22,"../models/PendingTransaction":23,"../models/Transaction":26}],40:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1923,7 +1984,7 @@ class Vars {
 }
 exports.default = Vars;
 
-},{"camelcase-keys":72}],40:[function(require,module,exports){
+},{"camelcase-keys":73}],41:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1948,16 +2009,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Hotspots_1 = __importDefault(require("./Hotspots"));
+const ResourceList_1 = __importDefault(require("../ResourceList"));
 const Sums_1 = __importStar(require("./Sums"));
+const Witness_1 = __importDefault(require("../models/Witness"));
 class Witnesses {
     constructor(client, hotspot) {
         this.client = client;
         this.hotspot = hotspot;
     }
     async list(params = {}) {
-        const hotspots = new Hotspots_1.default(this.client, this.hotspot);
-        return hotspots.list(params);
+        const url = `/hotspots/${this.hotspot.address}/witnesses`;
+        const { data: { data: witnesses, cursor }, } = await this.client.get(url, { cursor: params.cursor });
+        const data = witnesses.map((witness) => new Witness_1.default(this.client, witness));
+        return new ResourceList_1.default(data, this.list.bind(this), cursor);
     }
     get sum() {
         return new Sums_1.default(this.client, this.hotspot, Sums_1.SumsType.witnesses);
@@ -1965,9 +2029,9 @@ class Witnesses {
 }
 exports.default = Witnesses;
 
-},{"./Hotspots":32,"./Sums":37}],41:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Witness":27,"./Sums":38}],42:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":43}],42:[function(require,module,exports){
+},{"./lib/axios":44}],43:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2148,7 +2212,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":49,"../core/createError":50,"./../core/settle":54,"./../helpers/buildURL":58,"./../helpers/cookies":60,"./../helpers/isURLSameOrigin":63,"./../helpers/parseHeaders":65,"./../utils":67}],43:[function(require,module,exports){
+},{"../core/buildFullPath":50,"../core/createError":51,"./../core/settle":55,"./../helpers/buildURL":59,"./../helpers/cookies":61,"./../helpers/isURLSameOrigin":64,"./../helpers/parseHeaders":66,"./../utils":68}],44:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -2206,7 +2270,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":44,"./cancel/CancelToken":45,"./cancel/isCancel":46,"./core/Axios":47,"./core/mergeConfig":53,"./defaults":56,"./helpers/bind":57,"./helpers/isAxiosError":62,"./helpers/spread":66,"./utils":67}],44:[function(require,module,exports){
+},{"./cancel/Cancel":45,"./cancel/CancelToken":46,"./cancel/isCancel":47,"./core/Axios":48,"./core/mergeConfig":54,"./defaults":57,"./helpers/bind":58,"./helpers/isAxiosError":63,"./helpers/spread":67,"./utils":68}],45:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2227,7 +2291,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -2286,14 +2350,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":44}],46:[function(require,module,exports){
+},{"./Cancel":45}],47:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2390,7 +2454,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":58,"./../utils":67,"./InterceptorManager":48,"./dispatchRequest":51,"./mergeConfig":53}],48:[function(require,module,exports){
+},{"../helpers/buildURL":59,"./../utils":68,"./InterceptorManager":49,"./dispatchRequest":52,"./mergeConfig":54}],49:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2444,7 +2508,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":67}],49:[function(require,module,exports){
+},{"./../utils":68}],50:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -2466,7 +2530,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":59,"../helpers/isAbsoluteURL":61}],50:[function(require,module,exports){
+},{"../helpers/combineURLs":60,"../helpers/isAbsoluteURL":62}],51:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -2486,7 +2550,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":52}],51:[function(require,module,exports){
+},{"./enhanceError":53}],52:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2567,7 +2631,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":46,"../defaults":56,"./../utils":67,"./transformData":55}],52:[function(require,module,exports){
+},{"../cancel/isCancel":47,"../defaults":57,"./../utils":68,"./transformData":56}],53:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2611,7 +2675,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -2700,7 +2764,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":67}],54:[function(require,module,exports){
+},{"../utils":68}],55:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -2727,7 +2791,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":50}],55:[function(require,module,exports){
+},{"./createError":51}],56:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2749,7 +2813,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../utils":67}],56:[function(require,module,exports){
+},{"./../utils":68}],57:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -2851,7 +2915,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":42,"./adapters/xhr":42,"./helpers/normalizeHeaderName":64,"./utils":67,"_process":86}],57:[function(require,module,exports){
+},{"./adapters/http":43,"./adapters/xhr":43,"./helpers/normalizeHeaderName":65,"./utils":68,"_process":87}],58:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -2864,7 +2928,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2936,7 +3000,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":67}],59:[function(require,module,exports){
+},{"./../utils":68}],60:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2952,7 +3016,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],60:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -3007,7 +3071,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":67}],61:[function(require,module,exports){
+},{"./../utils":68}],62:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3023,7 +3087,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3036,7 +3100,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -3106,7 +3170,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":67}],64:[function(require,module,exports){
+},{"./../utils":68}],65:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -3120,7 +3184,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":67}],65:[function(require,module,exports){
+},{"../utils":68}],66:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -3175,7 +3239,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":67}],66:[function(require,module,exports){
+},{"./../utils":68}],67:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3204,7 +3268,7 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
@@ -3557,7 +3621,7 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":57}],68:[function(require,module,exports){
+},{"./helpers/bind":58}],69:[function(require,module,exports){
 ;(function (globalObject) {
   'use strict';
 
@@ -6461,9 +6525,9 @@ module.exports = {
   }
 })(this);
 
-},{}],69:[function(require,module,exports){
-
 },{}],70:[function(require,module,exports){
+
+},{}],71:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -6480,7 +6544,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":71,"get-intrinsic":76}],71:[function(require,module,exports){
+},{"./":72,"get-intrinsic":77}],72:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -6529,7 +6593,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":75,"get-intrinsic":76}],72:[function(require,module,exports){
+},{"function-bind":76,"get-intrinsic":77}],73:[function(require,module,exports){
 'use strict';
 const mapObj = require('map-obj');
 const camelCase = require('camelcase');
@@ -6608,7 +6672,7 @@ module.exports = (input, options) => {
 	return camelCaseConvert(input, options);
 };
 
-},{"camelcase":73,"map-obj":80,"quick-lru":92}],73:[function(require,module,exports){
+},{"camelcase":74,"map-obj":81,"quick-lru":93}],74:[function(require,module,exports){
 'use strict';
 
 const preserveCamelCase = string => {
@@ -6686,7 +6750,7 @@ module.exports = camelCase;
 // TODO: Remove this for the next major release
 module.exports.default = camelCase;
 
-},{}],74:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -6740,14 +6804,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":74}],76:[function(require,module,exports){
+},{"./implementation":75}],77:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -7079,7 +7143,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":75,"has":79,"has-symbols":77}],77:[function(require,module,exports){
+},{"function-bind":76,"has":80,"has-symbols":78}],78:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -7094,7 +7158,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":78}],78:[function(require,module,exports){
+},{"./shams":79}],79:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -7138,14 +7202,14 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],79:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":75}],80:[function(require,module,exports){
+},{"function-bind":76}],81:[function(require,module,exports){
 'use strict';
 
 const isObject = value => typeof value === 'object' && value !== null;
@@ -7206,7 +7270,7 @@ module.exports = (object, mapper, options) => {
 	return mapObject(object, mapper, options);
 };
 
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports={
 	"version": "2021a",
 	"zones": [
@@ -8056,11 +8120,11 @@ module.exports={
 		"ZW|Africa/Maputo Africa/Harare"
 	]
 }
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 var moment = module.exports = require("./moment-timezone");
 moment.tz.load(require('./data/packed/latest.json'));
 
-},{"./data/packed/latest.json":81,"./moment-timezone":83}],83:[function(require,module,exports){
+},{"./data/packed/latest.json":82,"./moment-timezone":84}],84:[function(require,module,exports){
 //! moment-timezone.js
 //! version : 0.5.33
 //! Copyright (c) JS Foundation and other contributors
@@ -8758,7 +8822,7 @@ moment.tz.load(require('./data/packed/latest.json'));
 	return moment;
 }));
 
-},{"moment":84}],84:[function(require,module,exports){
+},{"moment":85}],85:[function(require,module,exports){
 //! moment.js
 //! version : 2.29.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -14430,7 +14494,7 @@ moment.tz.load(require('./data/packed/latest.json'));
 
 })));
 
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 var hasMap = typeof Map === 'function' && Map.prototype;
 var mapSizeDescriptor = Object.getOwnPropertyDescriptor && hasMap ? Object.getOwnPropertyDescriptor(Map.prototype, 'size') : null;
 var mapSize = hasMap && mapSizeDescriptor && typeof mapSizeDescriptor.get === 'function' ? mapSizeDescriptor.get : null;
@@ -14452,6 +14516,7 @@ var match = String.prototype.match;
 var bigIntValueOf = typeof BigInt === 'function' ? BigInt.prototype.valueOf : null;
 var gOPS = Object.getOwnPropertySymbols;
 var symToString = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol' ? Symbol.prototype.toString : null;
+var hasShammedSymbols = typeof Symbol === 'function' && typeof Symbol.iterator === 'object';
 var isEnumerable = Object.prototype.propertyIsEnumerable;
 
 var gPO = (typeof Reflect === 'function' ? Reflect.getPrototypeOf : Object.getPrototypeOf) || (
@@ -14464,7 +14529,7 @@ var gPO = (typeof Reflect === 'function' ? Reflect.getPrototypeOf : Object.getPr
 
 var inspectCustom = require('./util.inspect').custom;
 var inspectSymbol = inspectCustom && isSymbol(inspectCustom) ? inspectCustom : null;
-var toStringTag = typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol' ? Symbol.toStringTag : null;
+var toStringTag = typeof Symbol === 'function' && typeof Symbol.toStringTag !== 'undefined' ? Symbol.toStringTag : null;
 
 module.exports = function inspect_(obj, options, depth, seen) {
     var opts = options || {};
@@ -14554,8 +14619,8 @@ module.exports = function inspect_(obj, options, depth, seen) {
         return '[Function' + (name ? ': ' + name : ' (anonymous)') + ']' + (keys.length > 0 ? ' { ' + keys.join(', ') + ' }' : '');
     }
     if (isSymbol(obj)) {
-        var symString = symToString.call(obj);
-        return typeof obj === 'object' ? markBoxed(symString) : symString;
+        var symString = hasShammedSymbols ? String(obj).replace(/^(Symbol\(.*\))_[^)]*$/, '$1') : symToString.call(obj);
+        return typeof obj === 'object' && !hasShammedSymbols ? markBoxed(symString) : symString;
     }
     if (isElement(obj)) {
         var s = '<' + String(obj.nodeName).toLowerCase();
@@ -14658,6 +14723,9 @@ function isBoolean(obj) { return toStr(obj) === '[object Boolean]' && (!toString
 
 // Symbol and BigInt do have Symbol.toStringTag by spec, so that can't be used to eliminate false positives
 function isSymbol(obj) {
+    if (hasShammedSymbols) {
+        return obj && typeof obj === 'object' && obj instanceof Symbol;
+    }
     if (typeof obj === 'symbol') {
         return true;
     }
@@ -14865,17 +14933,28 @@ function arrObjKeys(obj, inspect) {
             xs[i] = has(obj, i) ? inspect(obj[i], obj) : '';
         }
     }
+    var syms = typeof gOPS === 'function' ? gOPS(obj) : [];
+    var symMap;
+    if (hasShammedSymbols) {
+        symMap = {};
+        for (var k = 0; k < syms.length; k++) {
+            symMap['$' + syms[k]] = syms[k];
+        }
+    }
+
     for (var key in obj) { // eslint-disable-line no-restricted-syntax
         if (!has(obj, key)) { continue; } // eslint-disable-line no-restricted-syntax, no-continue
         if (isArr && String(Number(key)) === key && key < obj.length) { continue; } // eslint-disable-line no-restricted-syntax, no-continue
-        if ((/[^\w$]/).test(key)) {
+        if (hasShammedSymbols && symMap['$' + key] instanceof Symbol) {
+            // this is to prevent shammed Symbols, which are stored as strings, from being included in the string key section
+            continue; // eslint-disable-line no-restricted-syntax, no-continue
+        } else if ((/[^\w$]/).test(key)) {
             xs.push(inspect(key, obj) + ': ' + inspect(obj[key], obj));
         } else {
             xs.push(key + ': ' + inspect(obj[key], obj));
         }
     }
     if (typeof gOPS === 'function') {
-        var syms = gOPS(obj);
         for (var j = 0; j < syms.length; j++) {
             if (isEnumerable.call(obj, syms[j])) {
                 xs.push('[' + inspect(syms[j]) + ']: ' + inspect(obj[syms[j]], obj));
@@ -14885,7 +14964,7 @@ function arrObjKeys(obj, inspect) {
     return xs;
 }
 
-},{"./util.inspect":69}],86:[function(require,module,exports){
+},{"./util.inspect":70}],87:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -15071,7 +15150,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -15096,7 +15175,7 @@ module.exports = {
     RFC3986: Format.RFC3986
 };
 
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -15109,7 +15188,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":87,"./parse":89,"./stringify":90}],89:[function(require,module,exports){
+},{"./formats":88,"./parse":90,"./stringify":91}],90:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -15374,7 +15453,7 @@ module.exports = function (str, opts) {
     return utils.compact(obj);
 };
 
-},{"./utils":91}],90:[function(require,module,exports){
+},{"./utils":92}],91:[function(require,module,exports){
 'use strict';
 
 var getSideChannel = require('side-channel');
@@ -15666,7 +15745,7 @@ module.exports = function (object, opts) {
     return joined.length > 0 ? prefix + joined : '';
 };
 
-},{"./formats":87,"./utils":91,"side-channel":94}],91:[function(require,module,exports){
+},{"./formats":88,"./utils":92,"side-channel":95}],92:[function(require,module,exports){
 'use strict';
 
 var formats = require('./formats');
@@ -15919,7 +15998,7 @@ module.exports = {
     merge: merge
 };
 
-},{"./formats":87}],92:[function(require,module,exports){
+},{"./formats":88}],93:[function(require,module,exports){
 'use strict';
 
 class QuickLRU {
@@ -16036,11 +16115,11 @@ class QuickLRU {
 
 module.exports = QuickLRU;
 
-},{}],93:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 var e,t=(e=require("axios"))&&"object"==typeof e&&"default"in e?e.default:e;function r(e){return e}function n(e){var t=[];if(e)return Array.isArray(e)?e:("object"==typeof e&&Object.keys(e).forEach(function(r){"number"==typeof r&&(t[r]=e[r])}),t)}function o(e){if(t.isCancel(e))return Promise.reject(e);var r=i(e)||{};if(r.currentRetryAttempt=r.currentRetryAttempt||0,r.retry="number"==typeof r.retry?r.retry:3,r.retryDelay="number"==typeof r.retryDelay?r.retryDelay:100,r.instance=r.instance||t,r.backoffType=r.backoffType||"exponential",r.httpMethodsToRetry=n(r.httpMethodsToRetry)||["GET","HEAD","PUT","OPTIONS","DELETE"],r.noResponseRetries="number"==typeof r.noResponseRetries?r.noResponseRetries:2,r.statusCodesToRetry=n(r.statusCodesToRetry)||[[100,199],[429,429],[500,599]],e.config=e.config||{},e.config.raxConfig=Object.assign({},r),!(r.shouldRetry||s)(e))return Promise.reject(e);var o=new Promise(function(t){var n;n="linear"===r.backoffType?1e3*r.currentRetryAttempt:"static"===r.backoffType?r.retryDelay:(Math.pow(2,r.currentRetryAttempt)-1)/2*1e3,e.config.raxConfig.currentRetryAttempt+=1,setTimeout(t,n)}),f=r.onRetryAttempt?Promise.resolve(r.onRetryAttempt(e)):Promise.resolve();return Promise.resolve().then(function(){return o}).then(function(){return f}).then(function(){return r.instance.request(e.config)})}function s(e){var t=e.config.raxConfig;if(!t||0===t.retry)return!1;if(!e.response&&(t.currentRetryAttempt||0)>=t.noResponseRetries)return!1;if(!e.config.method||t.httpMethodsToRetry.indexOf(e.config.method.toUpperCase())<0)return!1;if(e.response&&e.response.status){for(var r=!1,n=0,o=t.statusCodesToRetry;n<o.length;n+=1){var s=o[n],i=e.response.status;if(i>=s[0]&&i<=s[1]){r=!0;break}}if(!r)return!1}return t.currentRetryAttempt=t.currentRetryAttempt||0,!(t.currentRetryAttempt>=t.retry)}function i(e){if(e&&e.config)return e.config.raxConfig}exports.attach=function(e){return(e=e||t).interceptors.response.use(r,o)},exports.detach=function(e,r){(r=r||t).interceptors.response.eject(e)},exports.shouldRetryRequest=s,exports.getConfig=i;
 
 
-},{"axios":41}],94:[function(require,module,exports){
+},{"axios":42}],95:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -16166,7 +16245,7 @@ module.exports = function getSideChannel() {
 	return channel;
 };
 
-},{"call-bind/callBound":70,"get-intrinsic":76,"object-inspect":85}],95:[function(require,module,exports){
+},{"call-bind/callBound":71,"get-intrinsic":77,"object-inspect":86}],96:[function(require,module,exports){
 const moment = require('moment-timezone')
 const { Client } = require('@helium/http')
 const client = new Client()
@@ -16174,8 +16253,8 @@ const client = new Client()
 const firstOracle = moment({ year: 2020, month: 05, day: 10 })
 let warnedFirstOracle = false
 
-const taxes = async (address, progress, warning) => {
-  console.log("taxes", address)
+const taxes = async (address, year, progress, warning) => {
+  console.log("taxes", address, year)
   try {
     const hotspot = await client.hotspots.get(address)
     const { name, lat, lng } = hotspot
@@ -16185,8 +16264,8 @@ const taxes = async (address, progress, warning) => {
     moment.tz.setDefault(tz);
     console.log("tz", tz)
 
-    const minTime = moment({ year: 2020 }).toDate()
-    const maxTime = moment(minTime).endOf('year').toDate()
+    const minTime = year === "All" ? moment(0) : moment({ year })
+    const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
     let found = 0
     let done = 0
@@ -16217,7 +16296,7 @@ const taxes = async (address, progress, warning) => {
 
     }
 
-    const params = { minTime, maxTime }
+    const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
     const rewards = client.hotspot(address).rewards.list(params)
     let page = await rewards
     progress({ done, found: found += page.data.length })
@@ -16234,10 +16313,11 @@ const taxes = async (address, progress, warning) => {
 
     return { name, tz, rows }
   } catch (e) {
+    console.log(e)
     warning(`hotspot-${e.response.status}`, "Couldn't find hotspot, use address (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
     throw (e)
   }
 }
 
 module.exports = taxes
-},{"@helium/http":15,"moment-timezone":82}]},{},[1]);
+},{"@helium/http":15,"moment-timezone":83}]},{},[1]);
