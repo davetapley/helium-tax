@@ -10,8 +10,8 @@ form.addEventListener("submit", event => {
 
   gtag('event', 'submit')
 
-  const progressCB = ({ transactionsDoneCount, usdSum }) => {
-    progress.innerHTML = `${transactionsDoneCount} transactions / $${usdSum.toFixed(2)}`
+  const progressCB = ({ transactionsDoneCount, hntSum, usdSum }) => {
+    progress.innerHTML = `${transactionsDoneCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
   }
 
   const warningCB = (kind, message) => {
@@ -16267,8 +16267,9 @@ const taxes = async (address, year, progress, warning) => {
     const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
     let transactionsDoneCount = 0
+    let hntSum = 0
     let usdSum = 0
-    progress({ transactionsDoneCount, usdSum })
+    progress({ transactionsDoneCount, hntSum, usdSum })
 
     const getRow = async (data) => {
       const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
@@ -16294,8 +16295,9 @@ const taxes = async (address, year, progress, warning) => {
       }
 
       transactionsDoneCount += 1 
+      hntSum += row.hnt
       usdSum += row.usd == '' ? 0: row.usd
-      progress({ transactionsDoneCount, usdSum })
+      progress({ transactionsDoneCount, hntSum, usdSum })
 
       return row
     }
