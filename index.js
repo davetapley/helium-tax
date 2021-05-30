@@ -22,7 +22,7 @@ form.addEventListener("submit", event => {
 
   const address = form.elements.address.value;
   const year = form.elements.year.value;
-  tax(address, year, progressCB, warningCB).then(({ name, rows }) => {
+  tax(address, year, progressCB, warningCB).then((rows) => {
     gtag('event', 'success')
     progress.innerHTML += ' ✅'
 
@@ -32,7 +32,7 @@ form.addEventListener("submit", event => {
     var a = window.document.createElement('a');
     a.style.display = 'none';
     a.href = window.URL.createObjectURL(new Blob(csv, { type: 'text/csv' }));
-    a.download = `${name}.csv`;
+    a.download = `${address}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

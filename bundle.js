@@ -23,7 +23,7 @@ form.addEventListener("submit", event => {
 
   const address = form.elements.address.value;
   const year = form.elements.year.value;
-  tax(address, year, progressCB, warningCB).then(({ name, rows }) => {
+  tax(address, year, progressCB, warningCB).then((rows) => {
     gtag('event', 'success')
     progress.innerHTML += ' ✅'
 
@@ -33,7 +33,7 @@ form.addEventListener("submit", event => {
     var a = window.document.createElement('a');
     a.style.display = 'none';
     a.href = window.URL.createObjectURL(new Blob(csv, { type: 'text/csv' }));
-    a.download = `${name}.csv`;
+    a.download = `${address}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -43,7 +43,7 @@ form.addEventListener("submit", event => {
   progress.classList.add('active')
 })
 
-},{"./tax":96}],2:[function(require,module,exports){
+},{"./tax":94}],2:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -420,7 +420,7 @@ class Client {
 }
 exports.default = Client;
 
-},{"./Network":13,"./resources/Accounts":28,"./resources/Blocks":29,"./resources/Challenges":30,"./resources/Cities":31,"./resources/Elections":32,"./resources/Hotspots":33,"./resources/Oracle":34,"./resources/PendingTransactions":35,"./resources/Stats":37,"./resources/Transactions":39,"./resources/Vars":40,"axios":42,"qs":89,"retry-axios":94}],13:[function(require,module,exports){
+},{"./Network":13,"./resources/Accounts":28,"./resources/Blocks":29,"./resources/Challenges":30,"./resources/Cities":31,"./resources/Elections":32,"./resources/Hotspots":33,"./resources/Oracle":34,"./resources/PendingTransactions":35,"./resources/Stats":37,"./resources/Transactions":39,"./resources/Vars":40,"axios":42,"qs":87,"retry-axios":92}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Network {
@@ -940,7 +940,7 @@ class Hotspot extends DataModel_1.default {
 }
 exports.default = Hotspot;
 
-},{"../resources/Challenges":30,"../resources/Rewards":36,"../resources/Transactions":39,"../resources/Witnesses":41,"./DataModel":20,"camelcase-keys":73}],23:[function(require,module,exports){
+},{"../resources/Challenges":30,"../resources/Rewards":36,"../resources/Transactions":39,"../resources/Witnesses":41,"./DataModel":20,"camelcase-keys":72}],23:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -980,7 +980,7 @@ class PendingTransaction extends DataModel_1.default {
 }
 exports.default = PendingTransaction;
 
-},{"./DataModel":20,"@helium/currency":11,"camelcase-keys":73}],24:[function(require,module,exports){
+},{"./DataModel":20,"@helium/currency":11,"camelcase-keys":72}],24:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1318,7 +1318,7 @@ class Transaction {
 }
 exports.default = Transaction;
 
-},{"./Challenge":18,"./DataModel":20,"@helium/currency":11,"camelcase-keys":73}],27:[function(require,module,exports){
+},{"./Challenge":18,"./DataModel":20,"@helium/currency":11,"camelcase-keys":72}],27:[function(require,module,exports){
 "use strict";
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
@@ -1375,7 +1375,7 @@ class Witness extends DataModel_1.default {
 }
 exports.default = Witness;
 
-},{"./DataModel":20,"camelcase-keys":73}],28:[function(require,module,exports){
+},{"./DataModel":20,"camelcase-keys":72}],28:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1491,7 +1491,7 @@ class Blocks {
 }
 exports.default = Blocks;
 
-},{"../ResourceList":14,"../models/Block":17,"camelcase-keys":73}],30:[function(require,module,exports){
+},{"../ResourceList":14,"../models/Block":17,"camelcase-keys":72}],30:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1827,7 +1827,7 @@ class Stats {
 }
 exports.default = Stats;
 
-},{"camelcase-keys":73}],38:[function(require,module,exports){
+},{"camelcase-keys":72}],38:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1983,7 +1983,7 @@ class Vars {
 }
 exports.default = Vars;
 
-},{"camelcase-keys":73}],41:[function(require,module,exports){
+},{"camelcase-keys":72}],41:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -2914,7 +2914,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":43,"./adapters/xhr":43,"./helpers/normalizeHeaderName":65,"./utils":68,"_process":87}],58:[function(require,module,exports){
+},{"./adapters/http":43,"./adapters/xhr":43,"./helpers/normalizeHeaderName":65,"./utils":68,"_process":96}],58:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -6525,8 +6525,6 @@ module.exports = {
 })(this);
 
 },{}],70:[function(require,module,exports){
-
-},{}],71:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -6543,7 +6541,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":72,"get-intrinsic":77}],72:[function(require,module,exports){
+},{"./":71,"get-intrinsic":76}],71:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -6592,7 +6590,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":76,"get-intrinsic":77}],73:[function(require,module,exports){
+},{"function-bind":75,"get-intrinsic":76}],72:[function(require,module,exports){
 'use strict';
 const mapObj = require('map-obj');
 const camelCase = require('camelcase');
@@ -6671,7 +6669,7 @@ module.exports = (input, options) => {
 	return camelCaseConvert(input, options);
 };
 
-},{"camelcase":74,"map-obj":81,"quick-lru":93}],74:[function(require,module,exports){
+},{"camelcase":73,"map-obj":80,"quick-lru":91}],73:[function(require,module,exports){
 'use strict';
 
 const preserveCamelCase = string => {
@@ -6749,7 +6747,7 @@ module.exports = camelCase;
 // TODO: Remove this for the next major release
 module.exports.default = camelCase;
 
-},{}],75:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -6803,14 +6801,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],76:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":75}],77:[function(require,module,exports){
+},{"./implementation":74}],76:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -7142,7 +7140,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":76,"has":80,"has-symbols":78}],78:[function(require,module,exports){
+},{"function-bind":75,"has":79,"has-symbols":77}],77:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -7157,7 +7155,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":79}],79:[function(require,module,exports){
+},{"./shams":78}],78:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -7201,14 +7199,14 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],80:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":76}],81:[function(require,module,exports){
+},{"function-bind":75}],80:[function(require,module,exports){
 'use strict';
 
 const isObject = value => typeof value === 'object' && value !== null;
@@ -7269,7 +7267,7 @@ module.exports = (object, mapper, options) => {
 	return mapObject(object, mapper, options);
 };
 
-},{}],82:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 module.exports={
 	"version": "2021a",
 	"zones": [
@@ -8119,11 +8117,11 @@ module.exports={
 		"ZW|Africa/Maputo Africa/Harare"
 	]
 }
-},{}],83:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 var moment = module.exports = require("./moment-timezone");
 moment.tz.load(require('./data/packed/latest.json'));
 
-},{"./data/packed/latest.json":82,"./moment-timezone":84}],84:[function(require,module,exports){
+},{"./data/packed/latest.json":81,"./moment-timezone":83}],83:[function(require,module,exports){
 //! moment-timezone.js
 //! version : 0.5.33
 //! Copyright (c) JS Foundation and other contributors
@@ -8821,7 +8819,7 @@ moment.tz.load(require('./data/packed/latest.json'));
 	return moment;
 }));
 
-},{"moment":85}],85:[function(require,module,exports){
+},{"moment":84}],84:[function(require,module,exports){
 //! moment.js
 //! version : 2.29.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -14493,7 +14491,7 @@ moment.tz.load(require('./data/packed/latest.json'));
 
 })));
 
-},{}],86:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 var hasMap = typeof Map === 'function' && Map.prototype;
 var mapSizeDescriptor = Object.getOwnPropertyDescriptor && hasMap ? Object.getOwnPropertyDescriptor(Map.prototype, 'size') : null;
 var mapSize = hasMap && mapSizeDescriptor && typeof mapSizeDescriptor.get === 'function' ? mapSizeDescriptor.get : null;
@@ -14963,193 +14961,7 @@ function arrObjKeys(obj, inspect) {
     return xs;
 }
 
-},{"./util.inspect":70}],87:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],88:[function(require,module,exports){
+},{"./util.inspect":95}],86:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -15174,7 +14986,7 @@ module.exports = {
     RFC3986: Format.RFC3986
 };
 
-},{}],89:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -15187,7 +14999,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":88,"./parse":90,"./stringify":91}],90:[function(require,module,exports){
+},{"./formats":86,"./parse":88,"./stringify":89}],88:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -15452,7 +15264,7 @@ module.exports = function (str, opts) {
     return utils.compact(obj);
 };
 
-},{"./utils":92}],91:[function(require,module,exports){
+},{"./utils":90}],89:[function(require,module,exports){
 'use strict';
 
 var getSideChannel = require('side-channel');
@@ -15744,7 +15556,7 @@ module.exports = function (object, opts) {
     return joined.length > 0 ? prefix + joined : '';
 };
 
-},{"./formats":88,"./utils":92,"side-channel":95}],92:[function(require,module,exports){
+},{"./formats":86,"./utils":90,"side-channel":93}],90:[function(require,module,exports){
 'use strict';
 
 var formats = require('./formats');
@@ -15997,7 +15809,7 @@ module.exports = {
     merge: merge
 };
 
-},{"./formats":88}],93:[function(require,module,exports){
+},{"./formats":86}],91:[function(require,module,exports){
 'use strict';
 
 class QuickLRU {
@@ -16114,11 +15926,11 @@ class QuickLRU {
 
 module.exports = QuickLRU;
 
-},{}],94:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 var e,t=(e=require("axios"))&&"object"==typeof e&&"default"in e?e.default:e;function r(e){return e}function n(e){var t=[];if(e)return Array.isArray(e)?e:("object"==typeof e&&Object.keys(e).forEach(function(r){"number"==typeof r&&(t[r]=e[r])}),t)}function o(e){if(t.isCancel(e))return Promise.reject(e);var r=i(e)||{};if(r.currentRetryAttempt=r.currentRetryAttempt||0,r.retry="number"==typeof r.retry?r.retry:3,r.retryDelay="number"==typeof r.retryDelay?r.retryDelay:100,r.instance=r.instance||t,r.backoffType=r.backoffType||"exponential",r.httpMethodsToRetry=n(r.httpMethodsToRetry)||["GET","HEAD","PUT","OPTIONS","DELETE"],r.noResponseRetries="number"==typeof r.noResponseRetries?r.noResponseRetries:2,r.statusCodesToRetry=n(r.statusCodesToRetry)||[[100,199],[429,429],[500,599]],e.config=e.config||{},e.config.raxConfig=Object.assign({},r),!(r.shouldRetry||s)(e))return Promise.reject(e);var o=new Promise(function(t){var n;n="linear"===r.backoffType?1e3*r.currentRetryAttempt:"static"===r.backoffType?r.retryDelay:(Math.pow(2,r.currentRetryAttempt)-1)/2*1e3,e.config.raxConfig.currentRetryAttempt+=1,setTimeout(t,n)}),f=r.onRetryAttempt?Promise.resolve(r.onRetryAttempt(e)):Promise.resolve();return Promise.resolve().then(function(){return o}).then(function(){return f}).then(function(){return r.instance.request(e.config)})}function s(e){var t=e.config.raxConfig;if(!t||0===t.retry)return!1;if(!e.response&&(t.currentRetryAttempt||0)>=t.noResponseRetries)return!1;if(!e.config.method||t.httpMethodsToRetry.indexOf(e.config.method.toUpperCase())<0)return!1;if(e.response&&e.response.status){for(var r=!1,n=0,o=t.statusCodesToRetry;n<o.length;n+=1){var s=o[n],i=e.response.status;if(i>=s[0]&&i<=s[1]){r=!0;break}}if(!r)return!1}return t.currentRetryAttempt=t.currentRetryAttempt||0,!(t.currentRetryAttempt>=t.retry)}function i(e){if(e&&e.config)return e.config.raxConfig}exports.attach=function(e){return(e=e||t).interceptors.response.use(r,o)},exports.detach=function(e,r){(r=r||t).interceptors.response.eject(e)},exports.shouldRetryRequest=s,exports.getConfig=i;
 
 
-},{"axios":42}],95:[function(require,module,exports){
+},{"axios":42}],93:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -16244,7 +16056,7 @@ module.exports = function getSideChannel() {
 	return channel;
 };
 
-},{"call-bind/callBound":71,"get-intrinsic":77,"object-inspect":86}],96:[function(require,module,exports){
+},{"call-bind/callBound":70,"get-intrinsic":76,"object-inspect":85}],94:[function(require,module,exports){
 const moment = require('moment-timezone')
 const { Client } = require('@helium/http')
 const client = new Client()
@@ -16252,69 +16064,10 @@ const client = new Client()
 const firstOracle = moment({ year: 2020, month: 05, day: 10 })
 let warnedFirstOracle = false
 
-const taxes = async (address, year, progress, warning) => {
-  console.log("taxes", address, year)
+const addressTaxes = async (address, year, progress, warning) => {
   try {
-    const hotspot = await client.hotspots.get(address)
-    const { name, lat, lng } = hotspot
-
-    const tzFetch = await fetch(`https://enz4qribbjb5c4.m.pipedream.net?lat=${lat}&lng=${lng}`)
-    const tz = await tzFetch.text()
-    moment.tz.setDefault(tz);
-    console.log("tz", tz)
-
-    const minTime = year === "All" ? moment(0) : moment({ year })
-    const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
-
-    let transactionsDoneCount = 0
-    let hntSum = 0
-    let usdSum = 0
-    progress({ transactionsDoneCount, hntSum, usdSum })
-
-    const getRow = async (data) => {
-      const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
-      if (ticker !== "HNT") throw "can't handle " + ticker
-
-      const time = moment(timestamp)
-
-      let row = {}
-      if (time < firstOracle) {
-        if (!warnedFirstOracle) {
-          warning('no_oracle', `Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
-          warnedFirstOracle = true
-        }
-
-        row = { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
-      } else {
-        const oraclePrice = await client.oracle.getPriceAtBlock(block)
-        const { floatBalance: price, type: { ticker: hntTicker } } = oraclePrice.price
-        if (hntTicker !== "USD") throw "can't handle HNT ticker " + hntTicker
-
-        const usd = hnt * price
-        row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
-      }
-
-      transactionsDoneCount += 1 
-      hntSum += row.hnt
-      usdSum += row.usd == '' ? 0: row.usd
-      progress({ transactionsDoneCount, hntSum, usdSum })
-
-      return row
-    }
-
-    const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
-    const rewards = client.hotspot(address).rewards.list(params)
-    let page = await rewards
-    const rows = await Promise.all(page.data.map(getRow))
-
-    while (page.hasMore) {
-      page = await page.nextPage()
-      const newRows = await Promise.all(page.data.map(getRow))
-
-      rows.push(...newRows)
-    }
-
-    return { name, tz, rows }
+    await client.hotspots.get(address)
+    return await hotspotTaxes(address, year, progress, warning)
   } catch (e) {
     console.log(e)
     warning(`hotspot-${e.response.status}`, "Couldn't find hotspot, use address (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
@@ -16322,5 +16075,259 @@ const taxes = async (address, year, progress, warning) => {
   }
 }
 
-module.exports = taxes
-},{"@helium/http":15,"moment-timezone":83}]},{},[1]);
+const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = []) => {
+  console.log("taxes", hotSpotAddress, year)
+  const hotspot = await client.hotspots.get(hotSpotAddress)
+  const { name, lat, lng } = hotspot
+
+  const tzFetch = await fetch(`https://enz4qribbjb5c4.m.pipedream.net?lat=${lat}&lng=${lng}`)
+  const tz = await tzFetch.text()
+  moment.tz.setDefault(tz);
+  console.log("tz", tz)
+
+  const minTime = year === "All" ? moment(0) : moment({ year })
+  const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
+
+  let transactionsDoneCount = 0
+  let hntSum = 0
+  let usdSum = 0
+  progress({ transactionsDoneCount, hntSum, usdSum })
+
+  const getRow = async (data) => {
+    const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
+    if (ticker !== "HNT") throw "can't handle " + ticker
+
+    const time = moment(timestamp)
+
+    let row = {}
+    if (time < firstOracle) {
+      if (!warnedFirstOracle) {
+        warning('no_oracle', `Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
+        warnedFirstOracle = true
+      }
+
+      row = { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
+    } else {
+      const oraclePrice = await client.oracle.getPriceAtBlock(block)
+      const { floatBalance: price, type: { ticker: hntTicker } } = oraclePrice.price
+      if (hntTicker !== "USD") throw "can't handle HNT ticker " + hntTicker
+
+      const usd = hnt * price
+      row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
+    }
+
+    transactionsDoneCount += 1
+    hntSum += row.hnt
+    usdSum += row.usd == '' ? 0 : row.usd
+    progress({ transactionsDoneCount, hntSum, usdSum })
+
+    return row
+  }
+
+  const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
+  const rewards = client.hotspot(hotSpotAddress).rewards.list(params)
+  let page = await rewards
+  const newRows = await Promise.all(page.data.map(getRow))
+  rows.push(...newRows)
+
+  while (page.hasMore) {
+    page = await page.nextPage()
+    const newRows = await Promise.all(page.data.map(getRow))
+
+    rows.push(...newRows)
+  }
+
+  return rows
+
+}
+
+module.exports = addressTaxes
+},{"@helium/http":15,"moment-timezone":82}],95:[function(require,module,exports){
+
+},{}],96:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}]},{},[1]);
