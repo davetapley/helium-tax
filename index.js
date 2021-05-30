@@ -9,8 +9,17 @@ form.addEventListener("submit", event => {
 
   gtag('event', 'submit')
 
-  const progressCB = ({ transactionsDoneCount, hntSum, usdSum }) => {
-    progress.innerHTML = `${transactionsDoneCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
+  const hotspots = new Set()
+  let transactionCount = 0
+  let hntSum = 0
+  let usdSum = 0
+  const progressCB = ({ hotSpotAddress, hnt, usd }) => {
+    hotspots.add(hotSpotAddress)
+    transactionCount += 1
+    hntSum += hnt
+    usdSum += usd
+    const hotspotCount = (hotspots.size > 1) ? `${hotspots.size} hotspots / ` : ""
+    progress.innerHTML = hotspotCount + `${transactionCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
   }
 
   const warningCB = (kind, message) => {

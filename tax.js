@@ -7,12 +7,29 @@ let warnedFirstOracle = false
 
 const addressTaxes = async (address, year, progress, warning) => {
   try {
+    // See if this is hotspot address
     await client.hotspots.get(address)
     return await hotspotTaxes(address, year, progress, warning)
   } catch (e) {
-    console.log(e)
-    warning(`hotspot-${e.response.status}`, "Couldn't find hotspot, use address (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
-    throw (e)
+    try {
+      // See if this is account address
+      const account = await client.accounts.get(address)
+      const { hotspots } = await account.hotspots.fetchList()
+
+      const withLocation = hotspots.filter(({ lat }) => lat)
+      if (hotspots.length != withLocation.length) {
+        warning('no-location', "At least one hotspot has no location and will be omitted from results")
+      }
+      const rows = await Promise.all(withLocation.map(({ address }) => hotspotTaxes(address, year, progress, warning)))
+      return rows.flat()
+    } catch (e) {
+      if (e.response) {
+        warning(`address-${e.response.status}`, "Couldn't find address, use (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
+      }
+      throw (e)
+    }
+
+    console.log(account)
   }
 }
 
@@ -28,11 +45,6 @@ const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = []) 
 
   const minTime = year === "All" ? moment(0) : moment({ year })
   const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
-
-  let transactionsDoneCount = 0
-  let hntSum = 0
-  let usdSum = 0
-  progress({ transactionsDoneCount, hntSum, usdSum })
 
   const getRow = async (data) => {
     const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
@@ -57,10 +69,7 @@ const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = []) 
       row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
     }
 
-    transactionsDoneCount += 1
-    hntSum += row.hnt
-    usdSum += row.usd == '' ? 0 : row.usd
-    progress({ transactionsDoneCount, hntSum, usdSum })
+    progress({ hotSpotAddress, hnt: row.hnt, usd: row.usd == '' ? 0 : row.usd })
 
     return row
   }
