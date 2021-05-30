@@ -10,8 +10,17 @@ form.addEventListener("submit", event => {
 
   gtag('event', 'submit')
 
-  const progressCB = ({ transactionsDoneCount, hntSum, usdSum }) => {
-    progress.innerHTML = `${transactionsDoneCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
+  const hotspots = new Set()
+  let transactionCount = 0
+  let hntSum = 0
+  let usdSum = 0
+  const progressCB = ({ hotSpotAddress, hnt, usd }) => {
+    hotspots.add(hotSpotAddress)
+    transactionCount += 1
+    hntSum += hnt
+    usdSum += usd
+    const hotspotCount = (hotspots.size > 1) ? `${hotspots.size} hotspots / ` : ""
+    progress.innerHTML = hotspotCount + `${transactionCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
   }
 
   const warningCB = (kind, message) => {
@@ -23,7 +32,7 @@ form.addEventListener("submit", event => {
 
   const address = form.elements.address.value;
   const year = form.elements.year.value;
-  tax(address, year, progressCB, warningCB).then(({ name, rows }) => {
+  tax(address, year, progressCB, warningCB).then((rows) => {
     gtag('event', 'success')
     progress.innerHTML += ' ✅'
 
@@ -33,7 +42,7 @@ form.addEventListener("submit", event => {
     var a = window.document.createElement('a');
     a.style.display = 'none';
     a.href = window.URL.createObjectURL(new Blob(csv, { type: 'text/csv' }));
-    a.download = `${name}.csv`;
+    a.download = `${address}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -16174,75 +16183,91 @@ const client = new Client()
 const firstOracle = moment({ year: 2020, month: 05, day: 10 })
 let warnedFirstOracle = false
 
-const taxes = async (address, year, progress, warning) => {
-  console.log("taxes", address, year)
+const addressTaxes = async (address, year, progress, warning) => {
   try {
-    const hotspot = await client.hotspots.get(address)
-    const { name, lat, lng } = hotspot
-
-    const tzFetch = await fetch(`https://enz4qribbjb5c4.m.pipedream.net?lat=${lat}&lng=${lng}`)
-    const tz = await tzFetch.text()
-    moment.tz.setDefault(tz);
-    console.log("tz", tz)
-
-    const minTime = year === "All" ? moment(0) : moment({ year })
-    const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
-
-    let transactionsDoneCount = 0
-    let hntSum = 0
-    let usdSum = 0
-    progress({ transactionsDoneCount, hntSum, usdSum })
-
-    const getRow = async (data) => {
-      const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
-      if (ticker !== "HNT") throw "can't handle " + ticker
-
-      const time = moment(timestamp)
-
-      let row = {}
-      if (time < firstOracle) {
-        if (!warnedFirstOracle) {
-          warning('no_oracle', `Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
-          warnedFirstOracle = true
-        }
-
-        row = { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
-      } else {
-        const oraclePrice = await client.oracle.getPriceAtBlock(block)
-        const { floatBalance: price, type: { ticker: hntTicker } } = oraclePrice.price
-        if (hntTicker !== "USD") throw "can't handle HNT ticker " + hntTicker
-
-        const usd = hnt * price
-        row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
-      }
-
-      transactionsDoneCount += 1 
-      hntSum += row.hnt
-      usdSum += row.usd == '' ? 0: row.usd
-      progress({ transactionsDoneCount, hntSum, usdSum })
-
-      return row
-    }
-
-    const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
-    const rewards = client.hotspot(address).rewards.list(params)
-    let page = await rewards
-    const rows = await Promise.all(page.data.map(getRow))
-
-    while (page.hasMore) {
-      page = await page.nextPage()
-      const newRows = await Promise.all(page.data.map(getRow))
-
-      rows.push(...newRows)
-    }
-
-    return { name, tz, rows }
+    // See if this is hotspot address
+    await client.hotspots.get(address)
+    return await hotspotTaxes(address, year, progress, warning)
   } catch (e) {
-    console.log(e)
-    warning(`hotspot-${e.response.status}`, "Couldn't find hotspot, use address (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
-    throw (e)
+    try {
+      // See if this is account address
+      const account = await client.accounts.get(address)
+      const { hotspots } = await account.hotspots.fetchList()
+
+      const withLocation = hotspots.filter(({ lat }) => lat)
+      if (hotspots.length != withLocation.length) {
+        warning('no-location', "At least one hotspot has no location and will be omitted from results")
+      }
+      const rows = await Promise.all(withLocation.map(({ address }) => hotspotTaxes(address, year, progress, warning)))
+      return rows.flat()
+    } catch (e) {
+      if (e.response) {
+        warning(`address-${e.response.status}`, "Couldn't find address, use (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
+      }
+      throw (e)
+    }
+
+    console.log(account)
   }
 }
 
-module.exports = taxes
+const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = []) => {
+  console.log("taxes", hotSpotAddress, year)
+  const hotspot = await client.hotspots.get(hotSpotAddress)
+  const { name, lat, lng } = hotspot
+
+  const tzFetch = await fetch(`https://enz4qribbjb5c4.m.pipedream.net?lat=${lat}&lng=${lng}`)
+  const tz = await tzFetch.text()
+  moment.tz.setDefault(tz);
+  console.log("tz", tz)
+
+  const minTime = year === "All" ? moment(0) : moment({ year })
+  const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
+
+  const getRow = async (data) => {
+    const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
+    if (ticker !== "HNT") throw "can't handle " + ticker
+
+    const time = moment(timestamp)
+
+    let row = {}
+    if (time < firstOracle) {
+      if (!warnedFirstOracle) {
+        warning('no_oracle', `Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
+        warnedFirstOracle = true
+      }
+
+      row = { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
+    } else {
+      const oraclePrice = await client.oracle.getPriceAtBlock(block)
+      const { floatBalance: price, type: { ticker: hntTicker } } = oraclePrice.price
+      if (hntTicker !== "USD") throw "can't handle HNT ticker " + hntTicker
+
+      const usd = hnt * price
+      row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
+    }
+
+    progress({ hotSpotAddress, hnt: row.hnt, usd: row.usd == '' ? 0 : row.usd })
+
+    return row
+  }
+
+  const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
+  const rewards = client.hotspot(hotSpotAddress).rewards.list(params)
+  let page = await rewards
+  const newRows = await Promise.all(page.data.map(getRow))
+  rows.push(...newRows)
+
+  while (page.hasMore) {
+    page = await page.nextPage()
+    const newRows = await Promise.all(page.data.map(getRow))
+
+    rows.push(...newRows)
+  }
+
+  return rows
+
+}
+
+module.exports = addressTaxes
 },{"@helium/http":15,"moment-timezone":82}]},{},[1]);
