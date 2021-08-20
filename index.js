@@ -38,6 +38,11 @@ form.addEventListener("submit", event => {
 
   const year = form.elements.year.value;
   tax(address, year, progressCB, warningCB).then((rows) => {
+    if(rows.length === 0) {
+        warningCB('no_rows', `No rewards during ${year}`)
+        return
+    }
+
     gtag('event', 'success')
     progress.innerHTML += ' ✅'
 
