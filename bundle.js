@@ -25,14 +25,25 @@ form.addEventListener("submit", event => {
 
   const warningCB = (kind, message) => {
     const li = document.createElement("li");
-    li.appendChild(document.createTextNode(message));
+    li.innerHTML = message
     gtag('event', kind)
     warning.appendChild(li)
   }
 
   const address = form.elements.address.value;
+
+  if(!/^\w+$/.test(address)) {
+    warningCB('bad_address', 'Use address and not name <a target="_blank" href="https://gist.github.com/davetapley/723f2d266f17561c9b2fbc70993fb6ba">More info here.</a>')
+    return
+  }
+
   const year = form.elements.year.value;
   tax(address, year, progressCB, warningCB).then((rows) => {
+    if(rows.length === 0) {
+        warningCB('no_rows', `No rewards during ${year}`)
+        return
+    }
+
     gtag('event', 'success')
     progress.innerHTML += ' ✅'
 
@@ -51,6 +62,7 @@ form.addEventListener("submit", event => {
   })
   progress.classList.add('active')
 })
+
 
 },{"./tax":95}],2:[function(require,module,exports){
 "use strict";
