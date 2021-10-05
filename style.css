@@ -82,3 +82,7 @@
 #tip-float img {
   max-width: 25%;
 }
+
+#bugsnag img {
+    max-width: 200px;
+}
