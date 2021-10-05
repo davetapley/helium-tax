@@ -16,6 +16,7 @@ jobs:
           cp index.html build/
           cp style.css build/
           cp tip-qr.png build/
+          cp bugsnag.png build/
           npx browserify index.js -o build/bundle.js
 
       - name: Deploy 🚀
