@@ -28,7 +28,6 @@ const addressTaxes = async (address, year, progress, warning) => {
         const rows = await Promise.all(withLocation.map(({ address }) => hotspotTaxes(address, year, progress, warning)))
         return rows.flat()
       } catch (e) {
-        console.log('here6')
         if (e.response) {
           warning(`address-${e.response.status}`, "Couldn't find address, use (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
         }
