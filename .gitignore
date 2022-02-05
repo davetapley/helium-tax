@@ -208,6 +208,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Intellij IDE
+.idea
+
 # End of https://www.toptal.com/developers/gitignore/api/osx,windows,linux,node,visualstudiocode
 
 bundle.js
