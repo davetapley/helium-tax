@@ -1,16 +1,17 @@
 port module Main exposing (..)
 
 import Browser
-import Csv.Encode exposing (Csv)
-import Debug exposing (toString)
+import Csv.Encode
 import File.Download as Download
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http exposing (..)
-import Json.Decode exposing (Decoder, field, int, maybe, string)
-import List exposing (length)
-import Maybe exposing (withDefault)
+import Iso8601
+import Json.Decode exposing (Decoder, andThen, field, int, maybe, string, succeed)
+import List exposing (concatMap, length)
+import Maybe.Extra exposing (isJust)
+import Time
 
 
 
@@ -37,13 +38,34 @@ type alias Address =
     String
 
 
+type alias Hotspot =
+    { name : String, address : Address }
+
+
+type alias PaymentActivity =
+    { time : Time, payments : List Int }
+
+
 type alias Reward =
-    { timestamp : Timestamp, amount : Int, block : Int }
+    { timestamp : Timestamp, amount : Int }
+
+
+paymentActivityToReward : PaymentActivity -> List Reward
+paymentActivityToReward paymentActivity =
+    let
+        toISO =
+            (*) 1000 >> Time.millisToPosix >> Iso8601.fromTime
+
+        toReward p =
+            { timestamp = toISO paymentActivity.time, amount = p }
+    in
+    List.map toReward paymentActivity.payments
 
 
 type alias Model =
     { address : Address
-    , hotspot : Maybe Hotspot
+    , account : Maybe Address
+    , hotspots : List Hotspot
     , rewards : List Reward
     , log : List String
     }
@@ -51,22 +73,21 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { address = "112ChG5vb21nE2wn4x4DYzDnG1VDCaRTbxrRXeBLkg2VFgEuWYfV", hotspot = Nothing, rewards = [], log = [] }, Cmd.none )
+    ( { address = "14dgxU7ZzgrCjXcEjKYuKNXePRqMFYVwitbgHspUNMyd3HsbJDD", account = Nothing, hotspots = [], rewards = [], log = [] }, Cmd.none )
 
 
 
 -- UPDATE
 
 
-type alias Hotspot =
-    { name : String }
-
-
 type Msg
     = Change String
     | Submit
+    | GotAccount (Result Http.Error Bool)
+    | GotPaymentActivity (Result Http.Error PaymentActivityResponse)
     | GotHotspot (Result Http.Error Hotspot)
     | GotRewards (Result Http.Error RewardsResponse)
+    | CheckBox Selectable
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,10 +99,51 @@ update msg model =
         Submit ->
             ( model, getHotspot model.address )
 
+        GotAccount (Ok isAccount) ->
+            ( { model
+                | account =
+                    if isAccount then
+                        Just model.address
+
+                    else
+                        Nothing
+                , log =
+                    if isAccount then
+                        "Found account" :: model.log
+
+                    else
+                        model.log
+              }
+            , if isAccount then
+                Cmd.none
+
+              else
+                getHotspot model.address
+            )
+
+        GotAccount (Err err) ->
+            ( { model | log = errorToString err :: model.log }, Cmd.none )
+
         GotHotspot (Ok hotspot) ->
-            ( { model | hotspot = Just hotspot, log = ("Found " ++ hotspot.name) :: model.log }, getRewards model.address Nothing )
+            ( { model | hotspots = [ hotspot ], log = ("Found " ++ hotspot.name) :: model.log }, getRewards model.address Nothing )
 
         GotHotspot (Err err) ->
+            case err of
+                BadStatus 404 ->
+                    ( model, getAccount model.address )
+
+                _ ->
+                    ( { model | log = errorToString err :: model.log }, Cmd.none )
+
+        GotPaymentActivity (Ok paymentActivityResponse) ->
+            case paymentActivityResponse.cursor of
+                Just cursor ->
+                    ( { model | rewards = model.rewards ++ List.concatMap paymentActivityToReward paymentActivityResponse.data }, getPaymentActivity model.address (Just cursor) )
+
+                Nothing ->
+                    ( { model | rewards = model.rewards ++ List.concatMap paymentActivityToReward paymentActivityResponse.data, log = "Starting download" :: model.log }, downloadCsv model.rewards )
+
+        GotPaymentActivity (Err err) ->
             ( { model | log = errorToString err :: model.log }, Cmd.none )
 
         GotRewards (Ok rewardsResponse) ->
@@ -95,12 +157,19 @@ update msg model =
         GotRewards (Err err) ->
             ( { model | log = errorToString err :: model.log }, Cmd.none )
 
+        CheckBox selectable ->
+            case selectable of
+                SelectAccount address ->
+                    ( model, getPaymentActivity address Nothing )
+
+                SelectHotspot hotspot ->
+                    ( model, getRewards hotspot.address Nothing )
+
 
 rewardToRow : Reward -> List String
 rewardToRow reward =
     [ reward.timestamp
     , String.fromInt reward.amount
-    , String.fromInt reward.block
     ]
 
 
@@ -108,9 +177,9 @@ downloadCsv : List Reward -> Cmd Msg
 downloadCsv rewards =
     let
         csv =
-            { headers = [ "timestamp", "amount", "block" ], records = List.map rewardToRow rewards }
+            { headers = [ "timestamp", "amount" ], records = List.map rewardToRow rewards }
     in
-    Download.string "rewards.md" "text/csv" (Csv.Encode.toString csv)
+    Download.string "rewards.csv" "text/csv" (Csv.Encode.toString csv)
 
 
 
@@ -126,29 +195,63 @@ subscriptions model =
 -- VIEW
 
 
-name : Maybe Hotspot -> String
-name hotspot =
-    case hotspot of
-        Just h ->
-            h.name
-
-        Nothing ->
-            ""
-
-
 view : Model -> Html Msg
 view model =
     div []
         [ input [ placeholder "Text to reverse", value model.address, onInput Change ] []
         , button [ onClick Submit ] [ text "Submit" ]
-        , div [] [ text (name model.hotspot) ]
+        , div [] [ viewEligible model.account model.hotspots ]
         , div [] [ text (String.fromInt (length model.rewards)) ]
         , div [] [ ul [] (List.map (\x -> li [] [ text x ]) (List.reverse model.log)) ]
         ]
 
 
+type Selectable
+    = SelectAccount Address
+    | SelectHotspot Hotspot
+
+
+viewEligible : Maybe Address -> List Hotspot -> Html Msg
+viewEligible account hotspots =
+    let
+        selectAccount =
+            case account of
+                Just address ->
+                    [ checkbox (SelectAccount address) address ]
+
+                Nothing ->
+                    []
+
+        selectHotspots =
+            List.map (\h -> checkbox (SelectHotspot h) h.name) hotspots
+    in
+    fieldset [] (selectAccount ++ selectHotspots)
+
+
+checkbox : Selectable -> String -> Html Msg
+checkbox selectable name =
+    label
+        [ style "padding" "20px" ]
+        [ input [ type_ "checkbox", onClick (CheckBox selectable) ] []
+        , text name
+        ]
+
+
 
 -- HTTP
+
+
+getAccount : Address -> Cmd Msg
+getAccount address =
+    Http.get
+        { url = "https://api.helium.io/v1/accounts/" ++ address
+        , expect = Http.expectJson GotAccount accountDecoder
+        }
+
+
+accountDecoder : Decoder Bool
+accountDecoder =
+    field "data" (field "block" (maybe int)) |> andThen (isJust >> succeed)
 
 
 getHotspot : Address -> Cmd Msg
@@ -161,7 +264,7 @@ getHotspot address =
 
 hotspotDecoder : Decoder Hotspot
 hotspotDecoder =
-    Json.Decode.map Hotspot (field "data" (field "name" string))
+    Json.Decode.map2 Hotspot (field "data" (field "name" string)) (field "data" (field "address" string))
 
 
 type alias Cursor =
@@ -178,10 +281,39 @@ cursorParam c =
             "&cursor=" ++ cursor
 
 
+minTime =
+    "2022-01-01T07:00:00.000Z"
+
+
+type alias Time =
+    Int
+
+
+getPaymentActivity : Address -> Maybe Cursor -> Cmd Msg
+getPaymentActivity address cursor =
+    Http.get
+        { url = "https://api.helium.io/v1/accounts/" ++ address ++ "/activity?filter_types=payment_v2&min_time=" ++ minTime ++ cursorParam cursor
+        , expect = Http.expectJson GotPaymentActivity paymentActivityDecoder
+        }
+
+
+paymentActivityDecoder : Decoder PaymentActivityResponse
+paymentActivityDecoder =
+    let
+        a =
+            Json.Decode.map2 PaymentActivity (field "time" int) (field "payments" (Json.Decode.list (field "amount" int)))
+    in
+    Json.Decode.map2 PaymentActivityResponse (field "data" (Json.Decode.list a)) (maybe (field "cursor" string))
+
+
+type alias PaymentActivityResponse =
+    { data : List PaymentActivity, cursor : Maybe String }
+
+
 getRewards : Address -> Maybe Cursor -> Cmd Msg
 getRewards address cursor =
     Http.get
-        { url = "https://api.helium.io/v1/hotspots/" ++ address ++ "/rewards?min_time=2022-01-22T07:00:00.000Z" ++ cursorParam cursor
+        { url = "https://api.helium.io/v1/hotspots/" ++ address ++ "/rewards?min_time=" ++ minTime ++ cursorParam cursor
         , expect = Http.expectJson GotRewards rewardsDecoder
         }
 
@@ -192,7 +324,7 @@ type alias Timestamp =
 
 rewardDecoder : Decoder Reward
 rewardDecoder =
-    Json.Decode.map3 Reward (field "timestamp" string) (field "amount" int) (field "block" int)
+    Json.Decode.map2 Reward (field "timestamp" string) (field "amount" int)
 
 
 type alias RewardsResponse =
