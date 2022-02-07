@@ -211,3 +211,5 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/osx,windows,linux,node,visualstudiocode
 
 bundle.js
+
+v2/elm-stuff/*
