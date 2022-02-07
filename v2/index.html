@@ -9,9 +9,10 @@
   <body>
     <div id="elm-node"></div>
     <script>
-        Elm.Main.init({
-            node: document.getElementById("elm-node")
-        })
+        var app = Elm.Main.init({node: document.getElementById("elm-node")})
+        app.ports.sendMessage.subscribe(function(message) {
+            console.log("port", message);
+        });
     </script>
   </body>
 </html>

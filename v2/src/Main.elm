@@ -1,16 +1,16 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
 import Csv.Encode exposing (Csv)
-import Html exposing (Html, button, div, input, text)
+import Debug exposing (toString)
+import File.Download as Download
+import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http exposing (..)
 import Json.Decode exposing (Decoder, field, int, maybe, string)
 import List exposing (length)
 import Maybe exposing (withDefault)
-import File.Download as Download
-
 
 
 
@@ -24,6 +24,9 @@ main =
         , subscriptions = subscriptions
         , view = view
         }
+
+
+port sendError : String -> Cmd msg
 
 
 
@@ -42,13 +45,13 @@ type alias Model =
     { address : Address
     , hotspot : Maybe Hotspot
     , rewards : List Reward
-    , debug : String
+    , log : List String
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { address = "112ChG5vb21nE2wn4x4DYzDnG1VDCaRTbxrRXeBLkg2VFgEuWYfV", hotspot = Nothing, rewards = [], debug = "" }, Cmd.none )
+    ( { address = "112ChG5vb21nE2wn4x4DYzDnG1VDCaRTbxrRXeBLkg2VFgEuWYfV", hotspot = Nothing, rewards = [], log = [] }, Cmd.none )
 
 
 
@@ -76,21 +79,21 @@ update msg model =
             ( model, getHotspot model.address )
 
         GotHotspot (Ok hotspot) ->
-            ( { model | hotspot = Just hotspot }, getRewards model.address Nothing )
+            ( { model | hotspot = Just hotspot, log = ("Found " ++ hotspot.name) :: model.log }, getRewards model.address Nothing )
 
         GotHotspot (Err err) ->
-            ( model, Cmd.none )
+            ( { model | log = errorToString err :: model.log }, Cmd.none )
 
         GotRewards (Ok rewardsResponse) ->
             case rewardsResponse.cursor of
                 Just cursor ->
-                    ( { model | debug = "cursor", rewards = model.rewards ++ rewardsResponse.data }, getRewards model.address (Just cursor) )
+                    ( { model | rewards = model.rewards ++ rewardsResponse.data }, getRewards model.address (Just cursor) )
 
                 Nothing ->
-                    ( { model | debug = "none", rewards = model.rewards ++ rewardsResponse.data }, Cmd.none )
+                    ( { model | rewards = model.rewards ++ rewardsResponse.data, log = "Starting download" :: model.log }, downloadCsv model.rewards )
 
         GotRewards (Err err) ->
-            ( { model | debug = Debug.toString err }, downloadCsv model.rewards )
+            ( { model | log = errorToString err :: model.log }, Cmd.none )
 
 
 rewardToRow : Reward -> List String
@@ -99,11 +102,13 @@ rewardToRow reward =
     , String.fromInt reward.amount
     , String.fromInt reward.block
     ]
+
+
 downloadCsv : List Reward -> Cmd Msg
 downloadCsv rewards =
     let
         csv =
-            { headers = [ "timestamp", "amount", "block" ], records = (List.map rewardToRow rewards) }
+            { headers = [ "timestamp", "amount", "block" ], records = List.map rewardToRow rewards }
     in
     Download.string "rewards.md" "text/csv" (Csv.Encode.toString csv)
 
@@ -138,7 +143,7 @@ view model =
         , button [ onClick Submit ] [ text "Submit" ]
         , div [] [ text (name model.hotspot) ]
         , div [] [ text (String.fromInt (length model.rewards)) ]
-        , div [] [ text ("TEST " ++ model.debug) ]
+        , div [] [ ul [] (List.map (\x -> li [] [ text x ]) (List.reverse model.log)) ]
         ]
 
 
@@ -176,7 +181,7 @@ cursorParam c =
 getRewards : Address -> Maybe Cursor -> Cmd Msg
 getRewards address cursor =
     Http.get
-        { url = "https://api.helium.io/v1/hotspots/" ++ address ++ "/rewards?min_time=2020-01-01T07:00:00.000Z" ++ cursorParam cursor
+        { url = "https://api.helium.io/v1/hotspots/" ++ address ++ "/rewards?min_time=2022-01-22T07:00:00.000Z" ++ cursorParam cursor
         , expect = Http.expectJson GotRewards rewardsDecoder
         }
 
@@ -196,4 +201,27 @@ type alias RewardsResponse =
 
 rewardsDecoder : Decoder RewardsResponse
 rewardsDecoder =
-    Json.Decode.map2 RewardsResponse (field "data" (Json.Decode.list rewardDecoder)) (field "cursor" (maybe string))
+    Json.Decode.map2 RewardsResponse (field "data" (Json.Decode.list rewardDecoder)) (maybe (field "cursor" string))
+
+
+
+-- https://stackoverflow.com/questions/56442885/error-when-convert-http-error-to-string-with-tostring-in-elm-0-19
+
+
+errorToString : Http.Error -> String
+errorToString error =
+    case error of
+        BadUrl url ->
+            "The URL " ++ url ++ " was invalid"
+
+        Timeout ->
+            "Unable to reach the server, try again"
+
+        NetworkError ->
+            "Unable to reach the server, check your network connection"
+
+        BadStatus code ->
+            "Error " ++ String.fromInt code
+
+        BadBody errorMessage ->
+            errorMessage
