@@ -20,13 +20,17 @@ const addressTaxes = async (address, year, progress, warning) => {
         // See if this is account address
         const account = await client.accounts.get(address)
         const { hotspots } = await account.hotspots.fetchList()
+        const { validators } = await account.validators.fetchList()
 
         const withLocation = hotspots.filter(({ lat }) => lat)
         if (hotspots.length !== withLocation.length) {
           warning('no-location', "At least one hotspot has no location and will be omitted from results")
         }
-        const rows = await Promise.all(withLocation.map(({ address }) => hotspotTaxes(address, year, progress, warning)))
-        return rows.flat()
+        const hotspotRows = await Promise.all(withLocation.map(({ address }) => hotspotTaxes(address, year, progress, warning)))
+        const validatorRows = await Promise.all(validators.map(({ address }) => hotspotTaxes(address, year, progress, warning, undefined, true)))
+        const rows = hotspotRows.flat()
+        rows.push(...validatorRows.flat())
+        return rows
       } catch (e) {
         if (e.response) {
           warning(`address-${e.response.status}`, "Couldn't find address, use (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
