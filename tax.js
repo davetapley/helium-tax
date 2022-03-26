@@ -41,11 +41,11 @@ const addressTaxes = async (address, year, progress, warning) => {
   }
 }
 
-const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = [], isValidator) => {
-  console.log("taxes", hotSpotAddress, year)
+const hotspotTaxes = async (address, year, progress, warning, rows = [], isValidator) => {
+  console.log("taxes", address, year)
   const hotspot = isValidator
-      ? await client.validators.get(hotSpotAddress)
-      : await client.hotspots.get(hotSpotAddress)
+      ? await client.validators.get(address)
+      : await client.hotspots.get(address)
 
   if (!isValidator) {
     const { lat, lng } = hotspot
@@ -81,7 +81,7 @@ const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = [], 
       row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
     }
 
-    progress({ hotSpotAddress, hnt: row.hnt, usd: row.usd === '' ? 0 : row.usd })
+    progress({ address, hnt: row.hnt, usd: row.usd === '' ? 0 : row.usd, isValidator })
 
     return row
   }

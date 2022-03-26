@@ -10,16 +10,22 @@ form.addEventListener("submit", event => {
   gtag('event', 'submit')
 
   const hotspots = new Set()
+  const validators = new Set()
   let transactionCount = 0
   let hntSum = 0
   let usdSum = 0
-  const progressCB = ({ hotSpotAddress, hnt, usd }) => {
-    hotspots.add(hotSpotAddress)
+  const progressCB = ({ address, hnt, usd, isValidator }) => {
+    if (isValidator) {
+      validators.add(address)
+    } else {
+      hotspots.add(address)
+    }
     transactionCount += 1
     hntSum += hnt
     usdSum += usd
     const hotspotCount = (hotspots.size > 1) ? `${hotspots.size} hotspots / ` : ""
-    progress.innerHTML = hotspotCount + `${transactionCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
+    const validatorsCount = (validators.size > 1) ? `${validators.size} validators / ` : ""
+    progress.innerHTML = hotspotCount + validatorsCount + `${transactionCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
   }
 
   const warningCB = (kind, message) => {
