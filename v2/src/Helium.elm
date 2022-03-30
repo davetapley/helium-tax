@@ -6,7 +6,9 @@ import Http
 import Json.Decode exposing (Decoder, andThen, field, int, maybe, string, succeed)
 import Http exposing (..)
 import Maybe.Extra exposing (isJust)
-import List exposing (length)
+import List
+import List.Extra
+import Maybe exposing (withDefault)
 
 type alias Model =
     { address : Address
@@ -14,6 +16,8 @@ type alias Model =
     , hotspots : List Hotspot
     , rewards : List Reward
     , gotRewards : Bool
+    , prices : List Price
+    , gotPrices : Bool
     , log : List String
     }
 
@@ -33,19 +37,24 @@ type alias PaymentActivityV2 =
 type alias Reward =
     { block : Int, timestamp : Timestamp, amount : Int }
 
+type alias Price =
+    { block : Int, timestamp : Timestamp, price : Int }
 
 init : Address -> Model
 init address =
-    { address = address, account = Nothing, hotspots = [], rewards = [], gotRewards = False, log = [] }
+    { address = address, account = Nothing, hotspots = [], rewards = [], gotRewards = False, prices = [], gotPrices = False, log = [] }
 
 type Msg
     = GotAccount (Result Http.Error Bool)
     | GotPaymentActivity (Result Http.Error PaymentActivityResponse)
     | GotHotspot (Result Http.Error Hotspot)
     | GotRewards (Result Http.Error RewardsResponse)
+    | GotPrices (Result Http.Error PricesResponse)
 
 
 baseURL = "https://ugxlyxnlrg9udfdyzwnrvghlu2vydmvycg.blockjoy.com"
+
+bone = 100000000
 
 getAccount : Address -> Cmd Msg
 getAccount address =
@@ -127,6 +136,8 @@ type alias Timestamp =
 type alias RewardsResponse =
     { data : List Reward, cursor : Maybe String }
 
+type alias PricesResponse =
+    { data : List Price, cursor : Maybe String }
 
 rewardsDecoder : Decoder RewardsResponse
 rewardsDecoder =
@@ -147,6 +158,24 @@ paymentActivityToReward paymentActivity =
             { block = paymentActivity.height, timestamp = toISO paymentActivity.time, amount = p }
     in
     List.map toReward paymentActivity.payments
+
+
+getPrices : Maybe Cursor -> Cmd Msg
+getPrices cursor =
+    Http.get
+        { url = baseURL ++ "/v1/oracle/prices?" ++ cursorParam cursor
+        , expect = Http.expectJson GotPrices pricesDecoder
+        }
+
+pricesDecoder : Decoder PricesResponse
+pricesDecoder =
+    let
+        price =
+            Json.Decode.map3 Price (field "block" int) (field "timestamp" string) (field "price" int)
+    in
+    Json.Decode.map2 PricesResponse (field "data" (Json.Decode.list price)) (maybe (field "cursor" string))
+
+
 
 -- https://stackoverflow.com/questions/56442885/error-when-convert-http-error-to-string-with-tostring-in-elm-0-19
 
@@ -170,7 +199,7 @@ errorToString error =
             errorMessage
 
 minTime =
-    "2022-01-01T07:00:00.000Z"
+    "2021-01-01T07:00:00.000Z"
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -232,3 +261,20 @@ update msg model =
 
         GotRewards (Err err) ->
             ( { model | log = errorToString err :: model.log }, Cmd.none )
+
+        GotPrices (Ok pricesResponse) ->
+            case pricesResponse.cursor of
+                Just cursor ->
+                    ( { model | prices = model.prices ++ pricesResponse.data }, (getPrices (Just cursor)) )
+
+                Nothing ->
+                    ( { model | prices = model.prices ++ pricesResponse.data, log = "Got prices" :: model.log, gotPrices = True }, Cmd.none )
+
+        GotPrices (Err err) ->
+            ( { model | log = errorToString err :: model.log }, Cmd.none )
+
+
+zipPrices : List Price -> List Reward -> List (Reward, Int)
+zipPrices prices rewards =
+    let findPrice block = (List.Extra.find (\p -> block > p.block)) prices
+    in List.map (\r -> (r,  (findPrice r.block |> Maybe.map .price |> Maybe.withDefault 0))) rewards

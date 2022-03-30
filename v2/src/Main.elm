@@ -8,7 +8,8 @@ import Helium exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import List exposing (length)
+import List exposing (length, head, filterMap)
+import List.Extra exposing (last)
 
 import Helium
 import Time exposing (Month(..))
@@ -54,22 +55,27 @@ type Msg
     = Change String
     | Submit
     | CheckBox Selectable
+    | Download
     | HeliumMsg Helium.Msg
 
-rewardToRow : Helium.Reward -> List String
-rewardToRow reward =
-    [ reward.timestamp
+rewardToRow : (Helium.Reward, Int) -> List String
+rewardToRow (reward, price) =
+    let priceUSD = toFloat price / Helium.bone
+        amountHNT = toFloat reward.amount / Helium.bone
+    in [ reward.timestamp
     , String.fromInt reward.block
-    , String.fromInt reward.amount
+    , String.fromFloat amountHNT
+    , String.fromFloat priceUSD
+    , String.fromFloat (amountHNT * priceUSD)
     ]
 
-downloadCsv : List Reward -> Cmd Msg
+downloadCsv : List (Reward, Int) -> Cmd Msg
 downloadCsv rewards =
     let
         csv =
-           { headers = [ "timestamp", "block", "amount" ], records = List.map rewardToRow rewards }
+           { headers = [ "timestamp", "block", "amount", "price", "usd" ], records = List.map rewardToRow rewards }
     in
-   Download.string "rewards.csv" "text/csv" (Csv.Encode.toString csv)
+   Download.bytes "rewards.csv" "text/csv" (Csv.Encode.toBytes csv)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -79,7 +85,8 @@ update msg model =
 
         Submit ->
             let hModel = Helium.init model.address
-            in ( {model | helium = Just hModel }, Cmd.map HeliumMsg (getAccount model.address) )
+                cmds = [getAccount model.address, getPrices Nothing]
+            in ( {model | helium = Just hModel }, Cmd.map HeliumMsg (Cmd.batch cmds) )
 
         CheckBox selectable ->
             case selectable of
@@ -88,6 +95,13 @@ update msg model =
 
                 SelectHotspot hotspot ->
                     ( model, Cmd.map HeliumMsg (getRewards hotspot.address minTime Nothing) )
+
+        Download ->
+            case model.helium of
+               Nothing ->
+                (model, Cmd.none)
+               Just helium ->
+                (model, downloadCsv (zipPrices helium.prices helium.rewards))
 
         HeliumMsg m -> 
             case model.helium of
@@ -126,8 +140,20 @@ viewAccount mModel =
         Just model -> div []
             [ div [] [ viewEligible model.account model.hotspots ]
             , div [] [ text ("rewards " ++ String.fromInt (length model.rewards)) ]
+            , viewPrices model
             , div [] [ ul [] (List.map (\x -> li [] [ text x ]) (List.reverse model.log)) ]
             ]
+
+
+viewPrices : Helium.Model ->  Html Msg
+viewPrices model =
+    let firstLast = filterMap identity [head model.prices, last model.prices]
+        ready = model.gotPrices && model.gotRewards
+    in div []
+        [ span [] [ text "Prices" ]
+        , span [] (List.map (\p -> li [] [text (String.fromInt p.block)]) firstLast)
+        , button [not ready |> disabled, onClick Download] [ text "Get CSV" ]
+    ]
 
 
 viewEligible : Maybe Address -> List Hotspot -> Html Msg
