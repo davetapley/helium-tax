@@ -11,16 +11,22 @@ form.addEventListener("submit", event => {
   gtag('event', 'submit')
 
   const hotspots = new Set()
+  const validators = new Set()
   let transactionCount = 0
   let hntSum = 0
   let usdSum = 0
-  const progressCB = ({ hotSpotAddress, hnt, usd }) => {
-    hotspots.add(hotSpotAddress)
+  const progressCB = ({ address, hnt, usd, isValidator }) => {
+    if (isValidator) {
+      validators.add(address)
+    } else {
+      hotspots.add(address)
+    }
     transactionCount += 1
     hntSum += hnt
     usdSum += usd
     const hotspotCount = (hotspots.size > 1) ? `${hotspots.size} hotspots / ` : ""
-    progress.innerHTML = hotspotCount + `${transactionCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
+    const validatorsCount = (validators.size > 1) ? `${validators.size} validators / ` : ""
+    progress.innerHTML = hotspotCount + validatorsCount + `${transactionCount} transactions / ${hntSum.toFixed(0)} HNT / $${usdSum.toFixed(2)} income`
   }
 
   const warningCB = (kind, message) => {
@@ -64,7 +70,195 @@ form.addEventListener("submit", event => {
 })
 
 
-},{"./tax":95}],2:[function(require,module,exports){
+},{"./tax":126}],2:[function(require,module,exports){
+(function (Buffer){(function (){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const utils_1 = require("./utils");
+const KeyTypes_1 = require("./KeyTypes");
+const NetTypes_1 = require("./NetTypes");
+class Address {
+    constructor(version, netType, keyType, publicKey) {
+        if (version !== 0) {
+            throw new Error('unsupported version');
+        }
+        if (!NetTypes_1.SUPPORTED_NET_TYPES.includes(netType)) {
+            throw new Error('unsupported net type');
+        }
+        if (!KeyTypes_1.SUPPORTED_KEY_TYPES.includes(keyType)) {
+            throw new Error('unsupported key type');
+        }
+        this.version = version;
+        this.netType = netType;
+        this.keyType = keyType;
+        this.publicKey = publicKey;
+    }
+    get bin() {
+        return Buffer.concat([
+            // eslint-disable-next-line no-bitwise
+            Buffer.from([this.netType | this.keyType]),
+            Buffer.from(this.publicKey),
+        ]);
+    }
+    get b58() {
+        return utils_1.bs58CheckEncode(this.version, this.bin);
+    }
+    static fromB58(b58) {
+        const version = utils_1.bs58Version(b58);
+        const netType = utils_1.bs58NetType(b58);
+        const keyType = utils_1.bs58KeyType(b58);
+        const publicKey = utils_1.bs58PublicKey(b58);
+        return new Address(version, netType, keyType, publicKey);
+    }
+    static fromBin(bin) {
+        const version = 0;
+        const byte = bin[0];
+        const netType = utils_1.byteToNetType(byte);
+        const keyType = utils_1.byteToKeyType(byte);
+        const publicKey = bin.slice(1, bin.length);
+        return new Address(version, netType, keyType, publicKey);
+    }
+    static isValid(b58) {
+        try {
+            Address.fromB58(b58);
+            return true;
+        }
+        catch (error) {
+            return false;
+        }
+    }
+}
+exports.default = Address;
+
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"./KeyTypes":3,"./NetTypes":4,"./utils":6,"buffer":91}],3:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SUPPORTED_KEY_TYPES = exports.ED25519_KEY_TYPE = exports.ECC_COMPACT_KEY_TYPE = void 0;
+exports.ECC_COMPACT_KEY_TYPE = 0;
+exports.ED25519_KEY_TYPE = 1;
+exports.SUPPORTED_KEY_TYPES = [
+    exports.ECC_COMPACT_KEY_TYPE,
+    exports.ED25519_KEY_TYPE,
+];
+
+},{}],4:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SUPPORTED_NET_TYPES = exports.TESTNET = exports.MAINNET = void 0;
+exports.MAINNET = 0x00;
+exports.TESTNET = 0x10;
+exports.SUPPORTED_NET_TYPES = [
+    exports.MAINNET,
+    exports.TESTNET,
+];
+
+},{}],5:[function(require,module,exports){
+"use strict";
+/**
+ * [[include:address/README.md]]
+ * @packageDocumentation
+ * @module address
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.utils = exports.KeyTypes = exports.NetTypes = exports.default = void 0;
+var Address_1 = require("./Address");
+Object.defineProperty(exports, "default", { enumerable: true, get: function () { return __importDefault(Address_1).default; } });
+exports.NetTypes = __importStar(require("./NetTypes"));
+exports.KeyTypes = __importStar(require("./KeyTypes"));
+exports.utils = __importStar(require("./utils"));
+
+},{"./Address":2,"./KeyTypes":3,"./NetTypes":4,"./utils":6}],6:[function(require,module,exports){
+(function (Buffer){(function (){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.bs58PublicKey = exports.bs58Version = exports.bs58KeyType = exports.bs58NetType = exports.byteToKeyType = exports.byteToNetType = exports.bs58ToBin = exports.bs58CheckEncode = void 0;
+/* eslint-disable no-bitwise */
+const js_sha256_1 = require("js-sha256");
+const bs58_1 = __importDefault(require("bs58"));
+const bs58CheckEncode = (version, binary) => {
+    const vPayload = Buffer.concat([
+        Buffer.from([version]),
+        binary,
+    ]);
+    const checksum = js_sha256_1.sha256(Buffer.from(js_sha256_1.sha256(vPayload), 'hex'));
+    const checksumBytes = Buffer.alloc(4, checksum, 'hex');
+    const result = Buffer.concat([
+        vPayload,
+        checksumBytes,
+    ]);
+    return bs58_1.default.encode(result);
+};
+exports.bs58CheckEncode = bs58CheckEncode;
+const bs58ToBin = (bs58Address) => {
+    const bin = bs58_1.default.decode(bs58Address);
+    const vPayload = bin.slice(0, -4);
+    const payload = bin.slice(1, -4);
+    const checksum = bin.slice(-4);
+    const checksumVerify = js_sha256_1.sha256(Buffer.from(js_sha256_1.sha256(vPayload), 'hex'));
+    const checksumVerifyBytes = Buffer.alloc(4, checksumVerify, 'hex');
+    if (!checksumVerifyBytes.equals(checksum)) {
+        throw new Error('invalid checksum');
+    }
+    return Buffer.from(payload);
+};
+exports.bs58ToBin = bs58ToBin;
+const byteToNetType = (byte) => byte & 0xf0;
+exports.byteToNetType = byteToNetType;
+const byteToKeyType = (byte) => byte & 0x0f;
+exports.byteToKeyType = byteToKeyType;
+const bs58NetType = (bs58Address) => {
+    const bin = exports.bs58ToBin(bs58Address);
+    const byte = Buffer.from(bin).slice(0, 1)[0];
+    return exports.byteToNetType(byte);
+};
+exports.bs58NetType = bs58NetType;
+const bs58KeyType = (bs58Address) => {
+    const bin = exports.bs58ToBin(bs58Address);
+    const byte = Buffer.from(bin).slice(0, 1)[0];
+    return exports.byteToKeyType(byte);
+};
+exports.bs58KeyType = bs58KeyType;
+const bs58Version = (bs58Address) => {
+    const bin = bs58_1.default.decode(bs58Address);
+    const version = bin.slice(0, 1)[0];
+    return version;
+};
+exports.bs58Version = bs58Version;
+const bs58PublicKey = (bs58Address) => {
+    const bin = exports.bs58ToBin(bs58Address);
+    const publicKey = Buffer.from(bin).slice(1);
+    return publicKey;
+};
+exports.bs58PublicKey = bs58PublicKey;
+
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"bs58":90,"buffer":91,"js-sha256":104}],7:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -143,6 +337,16 @@ class Balance {
             .dividedBy(CurrencyType_1.default.networkToken.coefficient)
             .toNumber(), CurrencyType_1.default.networkToken);
     }
+    toTestNetworkTokens(oraclePrice) {
+        if (this.type instanceof currency_types_1.TestNetworkTokens)
+            return this;
+        if (!oraclePrice)
+            throw Errors_1.OraclePriceRequiredError;
+        return new Balance(this.toUsd()
+            .bigBalance.dividedBy(oraclePrice.bigBalance)
+            .dividedBy(CurrencyType_1.default.testNetworkToken.coefficient)
+            .toNumber(), CurrencyType_1.default.testNetworkToken);
+    }
     toUsd(oraclePrice) {
         if (this.type instanceof currency_types_1.USDollars)
             return this;
@@ -178,7 +382,7 @@ class Balance {
 }
 exports.default = Balance;
 
-},{"./CurrencyType":3,"./Errors":4,"./currency_types":10,"bignumber.js":68}],3:[function(require,module,exports){
+},{"./CurrencyType":8,"./Errors":9,"./currency_types":16,"bignumber.js":88}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const currency_types_1 = require("./currency_types");
@@ -188,6 +392,9 @@ class CurrencyType {
     }
     static get networkToken() {
         return new currency_types_1.NetworkTokens();
+    }
+    static get testNetworkToken() {
+        return new currency_types_1.TestNetworkTokens();
     }
     static get dataCredit() {
         return new currency_types_1.DataCredits();
@@ -201,7 +408,7 @@ class CurrencyType {
 }
 exports.default = CurrencyType;
 
-},{"./currency_types":10}],4:[function(require,module,exports){
+},{"./currency_types":16}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OraclePriceRequiredError = exports.UnsupportedCurrencyConversionError = exports.MixedCurrencyTypeError = void 0;
@@ -209,7 +416,7 @@ exports.MixedCurrencyTypeError = new Error('Arguments provided to arithmetic fun
 exports.UnsupportedCurrencyConversionError = new Error('This currency does not support this type of conversion');
 exports.OraclePriceRequiredError = new Error('This conversion requires an oracle price to compute.');
 
-},{}],5:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -230,7 +437,7 @@ class BaseCurrencyType {
 }
 exports.default = BaseCurrencyType;
 
-},{"bignumber.js":68}],6:[function(require,module,exports){
+},{"bignumber.js":88}],11:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -245,7 +452,7 @@ class DataCredits extends BaseCurrencyType_1.default {
 }
 exports.default = DataCredits;
 
-},{"./BaseCurrencyType":5}],7:[function(require,module,exports){
+},{"./BaseCurrencyType":10}],12:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -260,7 +467,7 @@ class NetworkTokens extends BaseCurrencyType_1.default {
 }
 exports.default = NetworkTokens;
 
-},{"./BaseCurrencyType":5}],8:[function(require,module,exports){
+},{"./BaseCurrencyType":10}],13:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -275,7 +482,22 @@ class SecurityTokens extends BaseCurrencyType_1.default {
 }
 exports.default = SecurityTokens;
 
-},{"./BaseCurrencyType":5}],9:[function(require,module,exports){
+},{"./BaseCurrencyType":10}],14:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const BaseCurrencyType_1 = __importDefault(require("./BaseCurrencyType"));
+const TICKER = 'TNT';
+class TestNetworkTokens extends BaseCurrencyType_1.default {
+    constructor() {
+        super(TICKER, 8);
+    }
+}
+exports.default = TestNetworkTokens;
+
+},{"./BaseCurrencyType":10}],15:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -292,15 +514,17 @@ class USDollars extends BaseCurrencyType_1.default {
 }
 exports.default = USDollars;
 
-},{"./BaseCurrencyType":5}],10:[function(require,module,exports){
+},{"./BaseCurrencyType":10}],16:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseCurrencyType = exports.USDollars = exports.DataCredits = exports.SecurityTokens = exports.NetworkTokens = void 0;
+exports.BaseCurrencyType = exports.USDollars = exports.DataCredits = exports.SecurityTokens = exports.TestNetworkTokens = exports.NetworkTokens = void 0;
 var NetworkTokens_1 = require("./NetworkTokens");
 Object.defineProperty(exports, "NetworkTokens", { enumerable: true, get: function () { return __importDefault(NetworkTokens_1).default; } });
+var TestNetworkTokens_1 = require("./TestNetworkTokens");
+Object.defineProperty(exports, "TestNetworkTokens", { enumerable: true, get: function () { return __importDefault(TestNetworkTokens_1).default; } });
 var SecurityTokens_1 = require("./SecurityTokens");
 Object.defineProperty(exports, "SecurityTokens", { enumerable: true, get: function () { return __importDefault(SecurityTokens_1).default; } });
 var DataCredits_1 = require("./DataCredits");
@@ -310,26 +534,32 @@ Object.defineProperty(exports, "USDollars", { enumerable: true, get: function ()
 var BaseCurrencyType_1 = require("./BaseCurrencyType");
 Object.defineProperty(exports, "BaseCurrencyType", { enumerable: true, get: function () { return __importDefault(BaseCurrencyType_1).default; } });
 
-},{"./BaseCurrencyType":5,"./DataCredits":6,"./NetworkTokens":7,"./SecurityTokens":8,"./USDollars":9}],11:[function(require,module,exports){
+},{"./BaseCurrencyType":10,"./DataCredits":11,"./NetworkTokens":12,"./SecurityTokens":13,"./TestNetworkTokens":14,"./USDollars":15}],17:[function(require,module,exports){
 "use strict";
+/**
+ * [[include:currency/README.md]]
+ * @packageDocumentation
+ * @module currency
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = exports.USDollars = exports.SecurityTokens = exports.DataCredits = exports.NetworkTokens = exports.CurrencyType = exports.Balance = void 0;
+exports.default = exports.USDollars = exports.SecurityTokens = exports.DataCredits = exports.TestNetworkTokens = exports.NetworkTokens = exports.CurrencyType = exports.Balance = void 0;
 var Balance_1 = require("./Balance");
 Object.defineProperty(exports, "Balance", { enumerable: true, get: function () { return __importDefault(Balance_1).default; } });
 var CurrencyType_1 = require("./CurrencyType");
 Object.defineProperty(exports, "CurrencyType", { enumerable: true, get: function () { return __importDefault(CurrencyType_1).default; } });
 var currency_types_1 = require("./currency_types");
 Object.defineProperty(exports, "NetworkTokens", { enumerable: true, get: function () { return currency_types_1.NetworkTokens; } });
+Object.defineProperty(exports, "TestNetworkTokens", { enumerable: true, get: function () { return currency_types_1.TestNetworkTokens; } });
 Object.defineProperty(exports, "DataCredits", { enumerable: true, get: function () { return currency_types_1.DataCredits; } });
 Object.defineProperty(exports, "SecurityTokens", { enumerable: true, get: function () { return currency_types_1.SecurityTokens; } });
 Object.defineProperty(exports, "USDollars", { enumerable: true, get: function () { return currency_types_1.USDollars; } });
 var Balance_2 = require("./Balance");
 Object.defineProperty(exports, "default", { enumerable: true, get: function () { return __importDefault(Balance_2).default; } });
 
-},{"./Balance":2,"./CurrencyType":3,"./currency_types":10}],12:[function(require,module,exports){
+},{"./Balance":7,"./CurrencyType":8,"./currency_types":16}],18:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -369,13 +599,20 @@ const Oracle_1 = __importDefault(require("./resources/Oracle"));
 const PendingTransactions_1 = __importDefault(require("./resources/PendingTransactions"));
 const Elections_1 = __importDefault(require("./resources/Elections"));
 const Cities_1 = __importDefault(require("./resources/Cities"));
+const Validators_1 = __importDefault(require("./resources/Validators"));
+const StateChannels_1 = __importDefault(require("./resources/StateChannels"));
+const Rewards_1 = __importDefault(require("./resources/Rewards"));
+const Locations_1 = __importDefault(require("./resources/Locations"));
 class Client {
-    constructor(network = Network_1.default.production, options = { retry: 5 }) {
+    constructor(network = Network_1.default.production, options) {
         this.network = network;
         this.axios = axios_1.default.create({
             baseURL: this.network.endpoint,
+            headers: options === null || options === void 0 ? void 0 : options.headers,
         });
-        this.retry = options.retry;
+        this.name = options === null || options === void 0 ? void 0 : options.name;
+        this.userAgent = options === null || options === void 0 ? void 0 : options.userAgent;
+        this.retry = (options === null || options === void 0 ? void 0 : options.retry) === undefined ? 5 : options === null || options === void 0 ? void 0 : options.retry;
         if (this.retry > 0) {
             this.axios.defaults.raxConfig = {
                 instance: this.axios,
@@ -403,14 +640,23 @@ class Client {
     get hotspots() {
         return new Hotspots_1.default(this);
     }
+    get validators() {
+        return new Validators_1.default(this);
+    }
     get elections() {
         return new Elections_1.default(this);
     }
     get hotspot() {
         return this.hotspots.fromAddress.bind(this.hotspots);
     }
+    get validator() {
+        return this.validators.fromAddress.bind(this.validators);
+    }
     get challenges() {
         return new Challenges_1.default(this);
+    }
+    get stateChannels() {
+        return new StateChannels_1.default(this);
     }
     get pendingTransactions() {
         return new PendingTransactions_1.default(this);
@@ -430,18 +676,35 @@ class Client {
     get city() {
         return this.cities.fromId.bind(this.cities);
     }
+    get rewards() {
+        return new Rewards_1.default(this);
+    }
+    get locations() {
+        return new Locations_1.default(this);
+    }
+    get clientOptions() {
+        const opts = { headers: {} };
+        if (this.name) {
+            opts.headers['x-client-name'] = this.name;
+        }
+        if (this.userAgent) {
+            opts.headers['User-Agent'] = this.userAgent;
+        }
+        const hasHeaders = Object.keys(opts.headers).length > 0;
+        return hasHeaders ? opts : undefined;
+    }
     async get(path, params = {}) {
         const query = qs_1.default.stringify(params);
         const url = query.length > 0 ? [path, query].join('?') : path;
-        return this.axios.get(url);
+        return this.axios.get(url, this.clientOptions);
     }
     async post(path, params = {}) {
-        return this.axios.post(path, params);
+        return this.axios.post(path, params, this.clientOptions);
     }
 }
 exports.default = Client;
 
-},{"./Network":13,"./resources/Accounts":27,"./resources/Blocks":28,"./resources/Challenges":29,"./resources/Cities":30,"./resources/Elections":31,"./resources/Hotspots":32,"./resources/Oracle":33,"./resources/PendingTransactions":34,"./resources/Stats":36,"./resources/Transactions":38,"./resources/Vars":39,"axios":41,"qs":88,"retry-axios":93}],13:[function(require,module,exports){
+},{"./Network":19,"./resources/Accounts":38,"./resources/Blocks":39,"./resources/Challenges":40,"./resources/Cities":41,"./resources/Elections":42,"./resources/Hotspots":43,"./resources/Locations":44,"./resources/Oracle":45,"./resources/PendingTransactions":46,"./resources/Rewards":47,"./resources/StateChannels":49,"./resources/Stats":50,"./resources/Transactions":52,"./resources/Validators":53,"./resources/Vars":54,"axios":57,"qs":115,"retry-axios":120}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Network {
@@ -466,8 +729,12 @@ Network.testnet = new Network({
     baseURL: 'https://testnet-api.helium.wtf',
     version: 1,
 });
+Network.stakejoy = new Network({
+    baseURL: 'https://helium-api.stakejoy.com',
+    version: 1,
+});
 
-},{}],14:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }
 var __asyncValues = (this && this.__asyncValues) || function (o) {
@@ -543,13 +810,18 @@ class ResourceList {
 }
 exports.default = ResourceList;
 
-},{}],15:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
+/**
+ * [[include:http/README.md]]
+ * @packageDocumentation
+ * @module http
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GenericDataModel = exports.UnknownTransaction = exports.TokenBurnV1 = exports.TransferHotspotV1 = exports.AssertLocationV2 = exports.AssertLocationV1 = exports.AddGatewayV1 = exports.RewardsV2 = exports.RewardsV1 = exports.PaymentV2 = exports.PaymentV1 = exports.ResourceList = exports.Network = exports.default = exports.Client = void 0;
+exports.GenericDataModel = exports.UnknownTransaction = exports.TransferValidatorStakeV1 = exports.UnstakeValidatorV1 = exports.StakeValidatorV1 = exports.TokenBurnV1 = exports.TransferHotspotV2 = exports.TransferHotspotV1 = exports.AssertLocationV2 = exports.AssertLocationV1 = exports.AddGatewayV1 = exports.RewardsV2 = exports.RewardsV1 = exports.PaymentV2 = exports.PaymentV1 = exports.ResourceList = exports.Network = exports.default = exports.Client = void 0;
 var Client_1 = require("./Client");
 Object.defineProperty(exports, "Client", { enumerable: true, get: function () { return __importDefault(Client_1).default; } });
 var Client_2 = require("./Client");
@@ -567,13 +839,36 @@ Object.defineProperty(exports, "AddGatewayV1", { enumerable: true, get: function
 Object.defineProperty(exports, "AssertLocationV1", { enumerable: true, get: function () { return Transaction_1.AssertLocationV1; } });
 Object.defineProperty(exports, "AssertLocationV2", { enumerable: true, get: function () { return Transaction_1.AssertLocationV2; } });
 Object.defineProperty(exports, "TransferHotspotV1", { enumerable: true, get: function () { return Transaction_1.TransferHotspotV1; } });
+Object.defineProperty(exports, "TransferHotspotV2", { enumerable: true, get: function () { return Transaction_1.TransferHotspotV2; } });
 Object.defineProperty(exports, "TokenBurnV1", { enumerable: true, get: function () { return Transaction_1.TokenBurnV1; } });
+Object.defineProperty(exports, "StakeValidatorV1", { enumerable: true, get: function () { return Transaction_1.StakeValidatorV1; } });
+Object.defineProperty(exports, "UnstakeValidatorV1", { enumerable: true, get: function () { return Transaction_1.UnstakeValidatorV1; } });
+Object.defineProperty(exports, "TransferValidatorStakeV1", { enumerable: true, get: function () { return Transaction_1.TransferValidatorStakeV1; } });
 Object.defineProperty(exports, "UnknownTransaction", { enumerable: true, get: function () { return Transaction_1.UnknownTransaction; } });
 var DataModel_1 = require("./models/DataModel");
 Object.defineProperty(exports, "GenericDataModel", { enumerable: true, get: function () { return DataModel_1.GenericDataModel; } });
 
-},{"./Client":12,"./Network":13,"./ResourceList":14,"./models/DataModel":20,"./models/Transaction":26}],16:[function(require,module,exports){
+},{"./Client":18,"./Network":19,"./ResourceList":20,"./models/DataModel":26,"./models/Transaction":35}],22:[function(require,module,exports){
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
     for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -592,12 +887,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountStats = void 0;
 /* eslint-disable max-classes-per-file */
 const currency_1 = require("@helium/currency");
+const address_1 = __importStar(require("@helium/address"));
 const Transactions_1 = __importDefault(require("../resources/Transactions"));
+const Roles_1 = __importDefault(require("../resources/Roles"));
 const PendingTransactions_1 = __importDefault(require("../resources/PendingTransactions"));
 const Hotspots_1 = __importDefault(require("../resources/Hotspots"));
 const Challenges_1 = __importDefault(require("../resources/Challenges"));
 const DataModel_1 = __importDefault(require("./DataModel"));
 const Rewards_1 = __importDefault(require("../resources/Rewards"));
+const Validators_1 = __importDefault(require("../resources/Validators"));
 function toBalance(value, type) {
     if (value === undefined)
         return undefined;
@@ -624,21 +922,34 @@ class Account extends DataModel_1.default {
     constructor(client, account) {
         super();
         this.client = client;
+        this.netType = address_1.default.fromB58(account.address).netType;
+        const currencyType = this.netType === address_1.NetTypes.TESTNET
+            ? currency_1.CurrencyType.testNetworkToken
+            : currency_1.CurrencyType.default;
         this.speculativeNonce = account.speculative_nonce;
+        this.stakedBalance = toBalance(account.staked_balance, currencyType);
         this.secNonce = account.sec_nonce;
         this.secBalance = toBalance(account.sec_balance, currency_1.CurrencyType.security);
         this.nonce = account.nonce;
         this.dcNonce = account.dc_nonce;
         this.dcBalance = toBalance(account.dc_balance, currency_1.CurrencyType.dataCredit);
         this.block = account.block;
-        this.balance = toBalance(account.balance, currency_1.CurrencyType.default);
+        this.balance = toBalance(account.balance, currencyType);
         this.address = account.address;
+        this.hotspotCount = account.hotspot_count;
+        this.validatorCount = account.validator_count;
     }
     get activity() {
         return new Transactions_1.default(this.client, this);
     }
+    get roles() {
+        return new Roles_1.default(this.client, this);
+    }
     get hotspots() {
         return new Hotspots_1.default(this.client, this);
+    }
+    get validators() {
+        return new Validators_1.default(this.client, this);
     }
     get challenges() {
         return new Challenges_1.default(this.client, this);
@@ -657,7 +968,7 @@ class Account extends DataModel_1.default {
 }
 exports.default = Account;
 
-},{"../resources/Challenges":29,"../resources/Hotspots":32,"../resources/PendingTransactions":34,"../resources/Rewards":35,"../resources/Transactions":38,"./DataModel":20,"@helium/currency":11}],17:[function(require,module,exports){
+},{"../resources/Challenges":40,"../resources/Hotspots":43,"../resources/PendingTransactions":46,"../resources/Rewards":47,"../resources/Roles":48,"../resources/Transactions":52,"../resources/Validators":53,"./DataModel":26,"@helium/address":5,"@helium/currency":17}],23:[function(require,module,exports){
 "use strict";
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
@@ -697,7 +1008,7 @@ class Block extends DataModel_1.default {
 }
 exports.default = Block;
 
-},{"../resources/Transactions":38,"./DataModel":20}],18:[function(require,module,exports){
+},{"../resources/Transactions":52,"./DataModel":26}],24:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -738,7 +1049,7 @@ const constructPath = (path) => {
             hasFailedPath = true;
         }
         return {
-            witnesses: pathObject.witnesses.map((witness) => (Object.assign(Object.assign({ timestamp: witness.timestamp, snr: witness.snr, signal: witness.signal, packetHash: witness.packet_hash, owner: witness.owner, location: witness.location, isValid: isValidWitness(witness) }, (witness.hasOwnProperty('invalid_reason') && { invalidReason: witness.invalid_reason })), { gateway: witness.gateway, frequency: witness.frequency, datarate: witness.datarate, channel: witness.channel }))),
+            witnesses: pathObject.witnesses.map((witness) => (Object.assign(Object.assign({ timestamp: witness.timestamp, snr: witness.snr, signal: witness.signal, packetHash: witness.packet_hash, owner: witness.owner, location: witness.location, locationHex: witness.location_hex, isValid: isValidWitness(witness) }, (witness.hasOwnProperty('invalid_reason') && { invalidReason: witness.invalid_reason })), { gateway: witness.gateway, frequency: witness.frequency, datarate: witness.datarate, channel: witness.channel }))),
             receipt: hasReceipt
                 ? {
                     timestamp: pathObject.receipt.timestamp,
@@ -768,6 +1079,7 @@ const constructPath = (path) => {
             challengeeOwner: pathObject.challengee_owner,
             challengeeLon: pathObject.challengee_lon,
             challengeeLocation: pathObject.challengee_location,
+            challengeeLocationHex: pathObject.challengee_location_hex,
             challengeeLat: pathObject.challengee_lat,
             challengee: pathObject.challengee,
             result,
@@ -789,6 +1101,7 @@ class Challenge extends DataModel_1.default {
         this.challengerOwner = challenge.challenger_owner;
         this.challengerLon = challenge.challenger_lon;
         this.challengerLocation = challenge.challenger_location;
+        this.challengerLocationHex = challenge.challenger_location_hex;
         this.challengerLat = challenge.challenger_lat;
         this.challenger = challenge.challenger;
     }
@@ -799,7 +1112,7 @@ class Challenge extends DataModel_1.default {
 }
 exports.default = Challenge;
 
-},{"./DataModel":20}],19:[function(require,module,exports){
+},{"./DataModel":26}],25:[function(require,module,exports){
 "use strict";
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
@@ -829,6 +1142,8 @@ class City extends DataModel_1.default {
         this.longCountry = data.long_country;
         this.longCity = data.long_city;
         this.hotspotCount = data.hotspot_count;
+        this.onlineCount = data.online_count;
+        this.offlineCount = data.offline_count;
         this.cityId = data.city_id;
     }
     get hotspots() {
@@ -842,7 +1157,7 @@ class City extends DataModel_1.default {
 }
 exports.default = City;
 
-},{"../resources/Hotspots":32,"./DataModel":20}],20:[function(require,module,exports){
+},{"../resources/Hotspots":43,"./DataModel":26}],26:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GenericDataModel = void 0;
@@ -861,7 +1176,7 @@ class GenericDataModel extends DataModel {
 }
 exports.GenericDataModel = GenericDataModel;
 
-},{}],21:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -885,7 +1200,7 @@ class Election extends DataModel_1.default {
 }
 exports.default = Election;
 
-},{"./DataModel":20}],22:[function(require,module,exports){
+},{"./DataModel":26}],28:[function(require,module,exports){
 "use strict";
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
@@ -908,27 +1223,38 @@ const DataModel_1 = __importDefault(require("./DataModel"));
 const Witnesses_1 = __importDefault(require("../resources/Witnesses"));
 const Rewards_1 = __importDefault(require("../resources/Rewards"));
 const Challenges_1 = __importDefault(require("../resources/Challenges"));
+const Roles_1 = __importDefault(require("../resources/Roles"));
 class Hotspot extends DataModel_1.default {
     constructor(client, hotspot) {
+        var _a, _b, _c, _d;
         super();
         this.client = client;
         this.scoreUpdateHeight = hotspot.score_update_height;
         this.score = hotspot.score;
         this.rewardScale = hotspot.reward_scale;
         this.owner = hotspot.owner;
+        this.payer = hotspot.payer;
         this.name = hotspot.name;
         this.location = hotspot.location;
+        this.locationHex = hotspot.location_hex;
         this.lng = hotspot.lng;
         this.lat = hotspot.lat;
         this.block = hotspot.block;
-        this.status = hotspot.status;
+        this.status = {
+            timestamp: (_a = hotspot.status) === null || _a === void 0 ? void 0 : _a.timestamp,
+            height: ((_b = hotspot.status) === null || _b === void 0 ? void 0 : _b.height) || 0,
+            online: ((_c = hotspot.status) === null || _c === void 0 ? void 0 : _c.online) || '',
+            listenAddrs: ((_d = hotspot.status) === null || _d === void 0 ? void 0 : _d.listen_addrs) || [],
+        };
         this.nonce = hotspot.nonce;
+        this.speculativeNonce = hotspot.speculative_nonce;
         this.blockAdded = hotspot.block_added;
         this.timestampAdded = hotspot.timestamp_added;
         this.lastPocChallenge = hotspot.last_poc_challenge;
         this.lastChangeBlock = hotspot.last_change_block;
         this.gain = hotspot.gain;
         this.elevation = hotspot.elevation;
+        this.mode = hotspot.mode;
         if (hotspot.geocode) {
             this.geocode = camelcase_keys_1.default(hotspot.geocode);
         }
@@ -937,8 +1263,14 @@ class Hotspot extends DataModel_1.default {
     get activity() {
         return new Transactions_1.default(this.client, this);
     }
+    get roles() {
+        return new Roles_1.default(this.client, this);
+    }
     get witnesses() {
-        return new Witnesses_1.default(this.client, this);
+        return new Witnesses_1.default(this.client, this, 'witnesses');
+    }
+    get witnessed() {
+        return new Witnesses_1.default(this.client, this, 'witnessed');
     }
     get rewards() {
         return new Rewards_1.default(this.client, this);
@@ -954,7 +1286,155 @@ class Hotspot extends DataModel_1.default {
 }
 exports.default = Hotspot;
 
-},{"../resources/Challenges":29,"../resources/Rewards":35,"../resources/Transactions":38,"../resources/Witnesses":40,"./DataModel":20,"camelcase-keys":72}],23:[function(require,module,exports){
+},{"../resources/Challenges":40,"../resources/Rewards":47,"../resources/Roles":48,"../resources/Transactions":52,"../resources/Witnesses":55,"./DataModel":26,"camelcase-keys":94}],29:[function(require,module,exports){
+"use strict";
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const DataModel_1 = __importDefault(require("./DataModel"));
+class Location extends DataModel_1.default {
+    constructor(client, data) {
+        super();
+        this.client = client;
+        this.shortStreet = data.short_street;
+        this.shortState = data.short_state;
+        this.shortCountry = data.short_country;
+        this.shortCity = data.short_city;
+        this.longStreet = data.long_street;
+        this.longState = data.long_state;
+        this.longCountry = data.long_country;
+        this.longCity = data.long_city;
+        this.location = data.location;
+        this.cityId = data.city_id;
+    }
+    get data() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _a = this, { client } = _a, rest = __rest(_a, ["client"]);
+        return Object.assign({}, rest);
+    }
+}
+exports.default = Location;
+
+},{"./DataModel":26}],30:[function(require,module,exports){
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const build_1 = __importStar(require("../../../currency/build"));
+const DataModel_1 = __importDefault(require("./DataModel"));
+class OraclePrice extends DataModel_1.default {
+    constructor(client, oraclePrice) {
+        super();
+        this.client = client;
+        this.timestamp = oraclePrice.timestamp;
+        this.height = oraclePrice.block;
+        this.price = new build_1.default(oraclePrice.price, build_1.CurrencyType.usd);
+    }
+    get data() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _a = this, { client } = _a, rest = __rest(_a, ["client"]);
+        return Object.assign({}, rest);
+    }
+}
+exports.default = OraclePrice;
+
+},{"../../../currency/build":17,"./DataModel":26}],31:[function(require,module,exports){
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const build_1 = __importStar(require("../../../currency/build"));
+const DataModel_1 = __importDefault(require("./DataModel"));
+class OraclePricePrediction extends DataModel_1.default {
+    constructor(client, oraclePrice) {
+        super();
+        this.client = client;
+        this.time = oraclePrice.time;
+        this.price = new build_1.default(oraclePrice.price, build_1.CurrencyType.usd);
+    }
+    get data() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _a = this, { client } = _a, rest = __rest(_a, ["client"]);
+        return Object.assign({}, rest);
+    }
+}
+exports.default = OraclePricePrediction;
+
+},{"../../../currency/build":17,"./DataModel":26}],32:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -994,7 +1474,7 @@ class PendingTransaction extends DataModel_1.default {
 }
 exports.default = PendingTransaction;
 
-},{"./DataModel":20,"@helium/currency":11,"camelcase-keys":72}],24:[function(require,module,exports){
+},{"./DataModel":26,"@helium/currency":17,"camelcase-keys":94}],33:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1054,7 +1534,7 @@ class Reward extends DataModel_1.default {
 }
 exports.default = Reward;
 
-},{"./DataModel":20,"@helium/currency":11}],25:[function(require,module,exports){
+},{"./DataModel":26,"@helium/currency":17}],34:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1137,13 +1617,13 @@ class Sum extends DataModel_1.default {
 }
 exports.default = Sum;
 
-},{"./DataModel":20,"@helium/currency":11}],26:[function(require,module,exports){
+},{"./DataModel":26,"@helium/currency":17}],35:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TransferHotspotV1 = exports.RewardsV2 = exports.RewardsV1 = exports.UnknownTransaction = exports.PaymentV2 = exports.PaymentV1 = exports.AssertLocationV2 = exports.AssertLocationV1 = exports.TokenBurnV1 = exports.AddGatewayV1 = void 0;
+exports.TransferHotspotV2 = exports.TransferHotspotV1 = exports.RewardsV2 = exports.RewardsV1 = exports.UnknownTransaction = exports.SecurityExchangeV1 = exports.StateChannelCloseV1 = exports.TransferValidatorStakeV1 = exports.UnstakeValidatorV1 = exports.StakeValidatorV1 = exports.PaymentV2 = exports.PaymentV1 = exports.AssertLocationV2 = exports.AssertLocationV1 = exports.TokenBurnV1 = exports.AddGatewayV1 = void 0;
 /* eslint-disable no-param-reassign */
 /* eslint-disable max-classes-per-file */
 const camelcase_keys_1 = __importDefault(require("camelcase-keys"));
@@ -1210,6 +1690,56 @@ class PaymentV2 extends DataModel_1.default {
     }
 }
 exports.PaymentV2 = PaymentV2;
+class StakeValidatorV1 extends DataModel_1.default {
+    constructor(data) {
+        super();
+        Object.assign(this, data);
+    }
+    get data() {
+        return this;
+    }
+}
+exports.StakeValidatorV1 = StakeValidatorV1;
+class UnstakeValidatorV1 extends DataModel_1.default {
+    constructor(data) {
+        super();
+        Object.assign(this, data);
+    }
+    get data() {
+        return this;
+    }
+}
+exports.UnstakeValidatorV1 = UnstakeValidatorV1;
+class TransferValidatorStakeV1 extends DataModel_1.default {
+    constructor(data) {
+        super();
+        Object.assign(this, data);
+    }
+    get data() {
+        return this;
+    }
+}
+exports.TransferValidatorStakeV1 = TransferValidatorStakeV1;
+class StateChannelCloseV1 extends DataModel_1.default {
+    constructor(data) {
+        super();
+        Object.assign(this, data);
+    }
+    get data() {
+        return this;
+    }
+}
+exports.StateChannelCloseV1 = StateChannelCloseV1;
+class SecurityExchangeV1 extends DataModel_1.default {
+    constructor(data) {
+        super();
+        Object.assign(this, data);
+    }
+    get data() {
+        return this;
+    }
+}
+exports.SecurityExchangeV1 = SecurityExchangeV1;
 class UnknownTransaction extends DataModel_1.default {
     constructor(data) {
         super();
@@ -1233,23 +1763,23 @@ exports.RewardsV1 = RewardsV1;
 class RewardsV2 extends RewardsV1 {
 }
 exports.RewardsV2 = RewardsV2;
-function prepareTxn(txn) {
-    if (txn.fee && typeof txn.fee === 'number') {
-        txn.fee = new currency_1.Balance(txn.fee, currency_1.CurrencyType.dataCredit);
-    }
-    if (txn.staking_fee && typeof txn.staking_fee === 'number') {
-        txn.staking_fee = new currency_1.Balance(txn.staking_fee, currency_1.CurrencyType.dataCredit);
-    }
-    if (txn.amount && typeof txn.amount === 'number') {
-        txn.amount = new currency_1.Balance(txn.amount, currency_1.CurrencyType.networkToken);
-    }
-    if (txn.total_amount && typeof txn.total_amount === 'number') {
-        txn.total_amount = new currency_1.Balance(txn.total_amount, currency_1.CurrencyType.networkToken);
-    }
-    if (txn.amount_to_seller && typeof txn.amount_to_seller === 'number') {
-        txn.amount_to_seller = new currency_1.Balance(txn.amount_to_seller, currency_1.CurrencyType.networkToken);
-    }
-    return camelcase_keys_1.default(txn);
+function prepareTxn(txn, { deep } = { deep: false }) {
+    const balanceConversions = [
+        { key: 'fee', currencyType: currency_1.CurrencyType.dataCredit },
+        { key: 'staking_fee', currencyType: currency_1.CurrencyType.dataCredit },
+        { key: 'amount', currencyType: currency_1.CurrencyType.networkToken },
+        { key: 'total_amount', currencyType: currency_1.CurrencyType.networkToken },
+        { key: 'amount_to_seller', currencyType: currency_1.CurrencyType.networkToken },
+        { key: 'stake', currencyType: currency_1.CurrencyType.networkToken },
+        { key: 'payment_amount', currencyType: currency_1.CurrencyType.networkToken },
+        { key: 'stake_amount', currencyType: currency_1.CurrencyType.networkToken },
+    ];
+    balanceConversions.forEach(({ key, currencyType }) => {
+        if (txn[key] && typeof txn[key] === 'number') {
+            txn[key] = new currency_1.Balance(txn[key], currencyType);
+        }
+    });
+    return camelcase_keys_1.default(txn, { deep });
 }
 class TransferHotspotV1 extends DataModel_1.default {
     constructor(data) {
@@ -1261,6 +1791,16 @@ class TransferHotspotV1 extends DataModel_1.default {
     }
 }
 exports.TransferHotspotV1 = TransferHotspotV1;
+class TransferHotspotV2 extends DataModel_1.default {
+    constructor(data) {
+        super();
+        Object.assign(this, data);
+    }
+    get data() {
+        return this;
+    }
+}
+exports.TransferHotspotV2 = TransferHotspotV2;
 class Transaction {
     static fromJsonObject(json) {
         switch (json.type) {
@@ -1278,12 +1818,24 @@ class Transaction {
                 return this.toPocReceiptsV1(json);
             case 'transfer_hotspot_v1':
                 return this.toTransferHotspotV1(json);
+            case 'transfer_hotspot_v2':
+                return this.toTransferHotspotV2(json);
             case 'assert_location_v1':
                 return this.toAssertLocationV1(json);
             case 'assert_location_v2':
                 return this.toAssertLocationV2(json);
             case 'token_burn_v1':
                 return this.toTokenBurnV1(json);
+            case 'unstake_validator_v1':
+                return this.toUnstakeValidatorV1(json);
+            case 'stake_validator_v1':
+                return this.toStakeValidatorV1(json);
+            case 'transfer_validator_stake_v1':
+                return this.toTransferValidatorStakeV1(json);
+            case 'state_channel_close_v1':
+                return this.toStateChannelCloseV1(json);
+            case 'security_exchange_v1':
+                return this.toSecurityExchangeV1(json);
             default:
                 return this.toUnknownTransaction(json);
         }
@@ -1310,6 +1862,15 @@ class Transaction {
     static toTokenBurnV1(json) {
         return new TokenBurnV1(prepareTxn(json));
     }
+    static toUnstakeValidatorV1(json) {
+        return new UnstakeValidatorV1(prepareTxn(json));
+    }
+    static toStakeValidatorV1(json) {
+        return new StakeValidatorV1(prepareTxn(json));
+    }
+    static toTransferValidatorStakeV1(json) {
+        return new TransferValidatorStakeV1(prepareTxn(json));
+    }
     static toUnknownTransaction(json) {
         return new UnknownTransaction(prepareTxn(json));
     }
@@ -1318,6 +1879,15 @@ class Transaction {
     }
     static toTransferHotspotV1(json) {
         return new TransferHotspotV1(prepareTxn(json));
+    }
+    static toTransferHotspotV2(json) {
+        return new TransferHotspotV2(prepareTxn(json));
+    }
+    static toStateChannelCloseV1(json) {
+        return new StateChannelCloseV1(prepareTxn(json, { deep: true }));
+    }
+    static toSecurityExchangeV1(json) {
+        return new SecurityExchangeV1(prepareTxn(json));
     }
     static toRewardsV1(json) {
         const rewards = (json.rewards || []).map((r) => (Object.assign(Object.assign({}, r), { amount: new currency_1.Balance(r.amount, currency_1.CurrencyType.default) })));
@@ -1332,7 +1902,153 @@ class Transaction {
 }
 exports.default = Transaction;
 
-},{"./Challenge":18,"./DataModel":20,"@helium/currency":11,"camelcase-keys":72}],27:[function(require,module,exports){
+},{"./Challenge":24,"./DataModel":26,"@helium/currency":17,"camelcase-keys":94}],36:[function(require,module,exports){
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const build_1 = __importStar(require("../../../currency/build"));
+const DataModel_1 = __importDefault(require("./DataModel"));
+const Transactions_1 = __importDefault(require("../resources/Transactions"));
+const Rewards_1 = __importDefault(require("../resources/Rewards"));
+const Roles_1 = __importDefault(require("../resources/Roles"));
+class Validator extends DataModel_1.default {
+    constructor(client, validator) {
+        var _a, _b, _c;
+        super();
+        this.client = client;
+        this.versionHeartbeat = validator.version_heartbeat;
+        this.status = {
+            height: ((_a = validator.status) === null || _a === void 0 ? void 0 : _a.height) || 0,
+            online: ((_b = validator.status) === null || _b === void 0 ? void 0 : _b.online) || '',
+            listenAddrs: ((_c = validator.status) === null || _c === void 0 ? void 0 : _c.listen_addrs) || [],
+        };
+        this.stakeStatus = validator.stake_status;
+        this.stake = new build_1.default(validator.stake, build_1.CurrencyType.networkToken);
+        this.penalty = validator.penalty;
+        this.penalties = validator.penalties;
+        this.owner = validator.owner;
+        this.name = validator.name;
+        this.lastHeartbeat = validator.last_heartbeat;
+        this.consensusGroups = validator.consensus_groups;
+        this.blockAdded = validator.block_added;
+        this.block = validator.block;
+        this.address = validator.address;
+    }
+    get activity() {
+        return new Transactions_1.default(this.client, this);
+    }
+    get roles() {
+        return new Roles_1.default(this.client, this);
+    }
+    get rewards() {
+        return new Rewards_1.default(this.client, this);
+    }
+    get data() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _a = this, { client } = _a, rest = __rest(_a, ["client"]);
+        return Object.assign({}, rest);
+    }
+}
+exports.default = Validator;
+
+},{"../../../currency/build":17,"../resources/Rewards":47,"../resources/Roles":48,"../resources/Transactions":52,"./DataModel":26}],37:[function(require,module,exports){
+"use strict";
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const camelcase_keys_1 = __importDefault(require("camelcase-keys"));
+const DataModel_1 = __importDefault(require("./DataModel"));
+class Witness extends DataModel_1.default {
+    constructor(client, witness) {
+        var _a, _b, _c, _d;
+        super();
+        this.client = client;
+        this.scoreUpdateHeight = witness.score_update_height;
+        this.score = witness.score;
+        this.rewardScale = witness.reward_scale;
+        this.owner = witness.owner;
+        this.name = witness.name;
+        this.location = witness.location;
+        this.locationHex = witness.location_hex;
+        this.lng = witness.lng;
+        this.lat = witness.lat;
+        this.block = witness.block;
+        this.status = {
+            timestamp: (_a = witness.status) === null || _a === void 0 ? void 0 : _a.timestamp,
+            height: ((_b = witness.status) === null || _b === void 0 ? void 0 : _b.height) || 0,
+            online: ((_c = witness.status) === null || _c === void 0 ? void 0 : _c.online) || '',
+            listenAddrs: ((_d = witness.status) === null || _d === void 0 ? void 0 : _d.listen_addrs) || [],
+        };
+        this.nonce = witness.nonce;
+        this.blockAdded = witness.block_added;
+        this.timestampAdded = witness.timestamp_added;
+        this.lastPocChallenge = witness.last_poc_challenge;
+        this.lastChangeBlock = witness.last_change_block;
+        this.gain = witness.gain;
+        this.elevation = witness.elevation;
+        if (witness.geocode) {
+            this.geocode = camelcase_keys_1.default(witness.geocode);
+        }
+        this.address = witness.address;
+        this.witnessFor = witness.witness_for;
+        if (witness.witness_info) {
+            this.witnessInfo = camelcase_keys_1.default(witness.witness_info);
+        }
+        this.mode = witness.mode;
+    }
+    get data() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _a = this, { client } = _a, rest = __rest(_a, ["client"]);
+        return Object.assign({}, rest);
+    }
+}
+exports.default = Witness;
+
+},{"./DataModel":26,"camelcase-keys":94}],38:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1357,6 +2073,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const snakecase_keys_1 = __importDefault(require("snakecase-keys"));
 const Account_1 = __importStar(require("../models/Account"));
 const ResourceList_1 = __importDefault(require("../ResourceList"));
 class Accounts {
@@ -1373,9 +2090,16 @@ class Accounts {
         const data = accounts.map((d) => new Account_1.default(this.client, d));
         return new ResourceList_1.default(data, this.list.bind(this), cursor);
     }
-    async get(address) {
-        const url = `/accounts/${address}`;
-        const { data: { data: account } } = await this.client.get(url);
+    async listRich() {
+        const url = '/accounts/rich';
+        const response = await this.client.get(url);
+        const { data: { data: accounts }, } = response;
+        const data = accounts.map((d) => new Account_1.default(this.client, d));
+        return new ResourceList_1.default(data, this.list.bind(this));
+    }
+    async get(address, params) {
+        const path = `/accounts/${address}`;
+        const { data: { data: account }, } = await this.client.get(path, snakecase_keys_1.default(params || {}));
         return new Account_1.default(this.client, account);
     }
     async getStats(address) {
@@ -1386,13 +2110,14 @@ class Accounts {
 }
 exports.default = Accounts;
 
-},{"../ResourceList":14,"../models/Account":16}],28:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Account":22,"snakecase-keys":124}],39:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const camelcase_keys_1 = __importDefault(require("camelcase-keys"));
+const snakecase_keys_1 = __importDefault(require("snakecase-keys"));
 const Block_1 = __importDefault(require("../models/Block"));
 const ResourceList_1 = __importDefault(require("../ResourceList"));
 function stringIsInt(str) {
@@ -1437,8 +2162,9 @@ class Blocks {
         const { data: { data: block }, } = await this.client.get(url);
         return new Block_1.default(this.client, block);
     }
-    async getHeight() {
-        const { data: { data: { height } } } = await this.client.get('/blocks/height');
+    async getHeight(params) {
+        const path = '/blocks/height';
+        const { data: { data: { height } } } = await this.client.get(path, snakecase_keys_1.default(params || {}));
         return height;
     }
     async stats() {
@@ -1448,7 +2174,7 @@ class Blocks {
 }
 exports.default = Blocks;
 
-},{"../ResourceList":14,"../models/Block":17,"camelcase-keys":72}],29:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Block":23,"camelcase-keys":94,"snakecase-keys":124}],40:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1505,14 +2231,14 @@ class Challenges {
     }
     get sum() {
         if (this.context instanceof Hotspot_1.default) {
-            return new Sums_1.default(this.client, this.context, Sums_1.SumsType.challenges);
+            return new Sums_1.default(this.client, Sums_1.SumsType.challenges, this.context);
         }
         throw new Error('invalid context');
     }
 }
 exports.default = Challenges;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Challenge":18,"../models/Hotspot":22,"./Sums":37}],30:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Account":22,"../models/Challenge":24,"../models/Hotspot":28,"./Sums":51}],41:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1520,6 +2246,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const ResourceList_1 = __importDefault(require("../ResourceList"));
 const City_1 = __importDefault(require("../models/City"));
+const utils_1 = require("../utils");
 class Cities {
     constructor(client) {
         this.client = client;
@@ -1529,15 +2256,24 @@ class Cities {
     }
     async list(params = {}) {
         const url = encodeURI('/cities');
-        const result = await this.client.get(url, { search: params.query, cursor: params.cursor });
-        const { data: { data: cities, cursor } } = result;
+        const result = await this.client.get(url, {
+            search: params.query,
+            cursor: params.cursor,
+            order: utils_1.toSnakeCase(params.order),
+        });
+        const { data: { data: cities, cursor }, } = result;
         const data = cities.map((city) => new City_1.default(this.client, city));
         return new ResourceList_1.default(data, this.list.bind(this), cursor);
+    }
+    async get(cityid) {
+        const url = `/cities/${cityid}`;
+        const { data: { data: city }, } = await this.client.get(url);
+        return new City_1.default(this.client, city);
     }
 }
 exports.default = Cities;
 
-},{"../ResourceList":14,"../models/City":19}],31:[function(require,module,exports){
+},{"../ResourceList":20,"../models/City":25,"../utils":56}],42:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1565,7 +2301,7 @@ class Elections {
 }
 exports.default = Elections;
 
-},{"../ResourceList":14,"../models/Election":21}],32:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Election":27}],43:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1605,10 +2341,6 @@ class Hotspots {
             const city = this.context;
             url = `/cities/${city.cityId}/hotspots`;
         }
-        if (this.context instanceof Hotspot_1.default) {
-            const hotspot = this.context;
-            url = `/hotspots/${hotspot.address}/witnesses`;
-        }
         const response = await this.client.get(url, { cursor: params.cursor });
         const { data: { data: hotspots, cursor }, } = response;
         return { hotspots, cursor };
@@ -1619,32 +2351,74 @@ class Hotspots {
         return new Hotspot_1.default(this.client, hotspot);
     }
     async elected(block) {
-        const url = block === undefined ? '/elected' : `/elected/${block}`;
+        const url = block === undefined ? '/hotspots/elected' : `/hotspots/elected/${block}`;
         const response = await this.client.get(url);
         const { data: { data: hotspots }, } = response;
         const data = hotspots.map((h) => new Hotspot_1.default(this.client, h));
         return new ResourceList_1.default(data, this.list.bind(this));
     }
+    async hex(index, params) {
+        const response = await this.client.get(`/hotspots/hex/${index}`, { cursor: params === null || params === void 0 ? void 0 : params.cursor });
+        const { data: { data: hotspots, cursor }, } = response;
+        const data = hotspots.map((h) => new Hotspot_1.default(this.client, h));
+        const fetchMore = (nextParams) => this.hex(index, nextParams);
+        return new ResourceList_1.default(data, fetchMore, cursor);
+    }
+    async locationDistance(params) {
+        const response = await this.client.get('/hotspots/location/distance', params);
+        const { data: { data: hotspots, cursor }, } = response;
+        const data = hotspots.map((h) => new Hotspot_1.default(this.client, h));
+        return new ResourceList_1.default(data, this.locationDistance.bind(this), cursor);
+    }
 }
 exports.default = Hotspots;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/City":19,"../models/Hotspot":22}],33:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Account":22,"../models/City":25,"../models/Hotspot":28}],44:[function(require,module,exports){
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const currency_1 = require("@helium/currency");
+const Location_1 = __importDefault(require("../models/Location"));
+class Locations {
+    constructor(client) {
+        this.client = client;
+    }
+    async get(h3Index) {
+        const url = `/locations/${h3Index}`;
+        const { data: { data: location } } = await this.client.get(url);
+        return new Location_1.default(this.client, location);
+    }
+}
+exports.default = Locations;
+
+},{"../models/Location":29}],45:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const OraclePrice_1 = __importDefault(require("../models/OraclePrice"));
+const OraclePricePrediction_1 = __importDefault(require("../models/OraclePricePrediction"));
+const ResourceList_1 = __importDefault(require("../ResourceList"));
 class Oracle {
     constructor(client) {
         this.client = client;
     }
     async getCurrentPrice() {
         const url = '/oracle/prices/current';
-        const { data: { data: { price, block } } } = await this.client.get(url);
-        return { price: new currency_1.Balance(price, currency_1.CurrencyType.usd), height: block };
+        const { data: { data }, } = await this.client.get(url);
+        return new OraclePrice_1.default(this.client, data);
+    }
+    async listPrices(params = {}) {
+        const { data: { data: prices, cursor }, } = await this.client.get('/oracle/prices', { cursor: params.cursor });
+        const data = prices.map((d) => new OraclePrice_1.default(this.client, d));
+        return new ResourceList_1.default(data, this.listPrices.bind(this), cursor);
     }
     async getPriceAtBlock(height) {
         const url = `/oracle/prices/${height}`;
-        const { data: { data: { price, block } } } = await this.client.get(url);
-        return { price: new currency_1.Balance(price, currency_1.CurrencyType.usd), height: block };
+        const { data: { data }, } = await this.client.get(url);
+        return new OraclePrice_1.default(this.client, data);
     }
     async getPredictedPrice() {
         const url = '/oracle/predictions';
@@ -1652,16 +2426,13 @@ class Oracle {
         if (!response.data.data || !response.data.data.length) {
             return [];
         }
-        const { data: { data: predictions } } = response;
-        return predictions.map((prediction) => ({
-            time: prediction.time,
-            price: new currency_1.Balance(prediction.price, currency_1.CurrencyType.usd),
-        }));
+        const { data: { data: predictions }, } = response;
+        return predictions.map((prediction) => new OraclePricePrediction_1.default(this.client, prediction));
     }
 }
 exports.default = Oracle;
 
-},{"@helium/currency":11}],34:[function(require,module,exports){
+},{"../ResourceList":20,"../models/OraclePrice":30,"../models/OraclePricePrediction":31}],46:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1699,7 +2470,7 @@ class PendingTransactions {
 }
 exports.default = PendingTransactions;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/PendingTransaction":23}],35:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Account":22,"../models/PendingTransaction":32}],47:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1729,6 +2500,7 @@ const Hotspot_1 = __importDefault(require("../models/Hotspot"));
 const Account_1 = __importDefault(require("../models/Account"));
 const Reward_1 = __importDefault(require("../models/Reward"));
 const Sums_1 = __importStar(require("./Sums"));
+const Validator_1 = __importDefault(require("../models/Validator"));
 class Rewards {
     constructor(client, context) {
         this.client = client;
@@ -1746,7 +2518,7 @@ class Rewards {
         return new ResourceList_1.default(data, this.list.bind(this), cursor);
     }
     get sum() {
-        return new Sums_1.default(this.client, this.context, Sums_1.SumsType.rewards);
+        return new Sums_1.default(this.client, Sums_1.SumsType.rewards, this.context);
     }
     get baseUrl() {
         let url = '';
@@ -1756,6 +2528,9 @@ class Rewards {
         else if (this.context instanceof Account_1.default) {
             url = `/accounts/${this.context.address}/rewards`;
         }
+        else if (this.context instanceof Validator_1.default) {
+            url = `/validators/${this.context.address}/rewards`;
+        }
         else {
             throw new Error('invalid context');
         }
@@ -1764,7 +2539,78 @@ class Rewards {
 }
 exports.default = Rewards;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Hotspot":22,"../models/Reward":24,"./Sums":37}],36:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Account":22,"../models/Hotspot":28,"../models/Reward":33,"../models/Validator":36,"./Sums":51}],48:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const Account_1 = __importDefault(require("../models/Account"));
+const ResourceList_1 = __importDefault(require("../ResourceList"));
+const Hotspot_1 = __importDefault(require("../models/Hotspot"));
+const Validator_1 = __importDefault(require("../models/Validator"));
+class Roles {
+    constructor(client, context) {
+        this.client = client;
+        this.context = context;
+    }
+    async list(params = {}) {
+        var _a, _b;
+        const { data: { data: roles, cursor }, } = await this.client.get(this.activityUrl, {
+            cursor: params.cursor,
+            filter_types: params.filterTypes ? params.filterTypes.join() : undefined,
+            min_time: params.minTime instanceof Date ? (_a = params.minTime) === null || _a === void 0 ? void 0 : _a.toISOString() : params.minTime,
+            max_time: params.maxTime instanceof Date ? (_b = params.maxTime) === null || _b === void 0 ? void 0 : _b.toISOString() : params.maxTime,
+            limit: params.limit,
+        });
+        const data = roles.map((d) => d);
+        return new ResourceList_1.default(data, this.list.bind(this), cursor);
+    }
+    get activityUrl() {
+        let url;
+        if (this.context instanceof Account_1.default) {
+            const account = this.context;
+            url = `/accounts/${account.address}/roles`;
+        }
+        else if (this.context instanceof Hotspot_1.default) {
+            const hotspot = this.context;
+            url = `/hotspots/${hotspot.address}/roles`;
+        }
+        else if (this.context instanceof Validator_1.default) {
+            const validator = this.context;
+            url = `/validators/${validator.address}/roles`;
+        }
+        else {
+            throw new Error('Must provide a context to list roles from');
+        }
+        return url;
+    }
+}
+exports.default = Roles;
+
+},{"../ResourceList":20,"../models/Account":22,"../models/Hotspot":28,"../models/Validator":36}],49:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const Transaction_1 = __importDefault(require("../models/Transaction"));
+const ResourceList_1 = __importDefault(require("../ResourceList"));
+class StateChannels {
+    constructor(client) {
+        this.client = client;
+    }
+    async list(params = {}) {
+        const url = '/state_channels';
+        const response = await this.client.get(url, { cursor: params.cursor });
+        const { data: { data: stateChannels, cursor }, } = response;
+        const data = stateChannels.map((d) => Transaction_1.default.fromJsonObject(d));
+        return new ResourceList_1.default(data, this.list.bind(this), cursor);
+    }
+}
+exports.default = StateChannels;
+
+},{"../ResourceList":20,"../models/Transaction":35}],50:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1772,23 +2618,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const camelcase_keys_1 = __importDefault(require("camelcase-keys"));
 class Stats {
-    constructor(client) {
+    constructor(client, context) {
         this.client = client;
+        this.context = context;
     }
     async get() {
-        const url = '/stats';
-        const { data: { data: stats } } = await this.client.get(url);
+        let url = '/stats';
+        if (this.context === 'validators') {
+            url = '/validators/stats';
+        }
+        const { data: { data: stats }, } = await this.client.get(url);
         return camelcase_keys_1.default(stats, { deep: true });
     }
     async counts() {
         const url = '/stats/counts';
-        const { data: { data: stats } } = await this.client.get(url);
+        const { data: { data: stats }, } = await this.client.get(url);
         return camelcase_keys_1.default(stats);
+    }
+    async dcBurns() {
+        const url = '/dc_burns/stats';
+        const { data: { data: stats }, } = await this.client.get(url);
+        return camelcase_keys_1.default(stats, { deep: true });
     }
 }
 exports.default = Stats;
 
-},{"camelcase-keys":72}],37:[function(require,module,exports){
+},{"camelcase-keys":94}],51:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1799,6 +2654,7 @@ const Sum_1 = __importDefault(require("../models/Sum"));
 const ResourceList_1 = __importDefault(require("../ResourceList"));
 const Hotspot_1 = __importDefault(require("../models/Hotspot"));
 const Account_1 = __importDefault(require("../models/Account"));
+const Validator_1 = __importDefault(require("../models/Validator"));
 var SumsType;
 (function (SumsType) {
     SumsType["rewards"] = "rewards";
@@ -1806,7 +2662,7 @@ var SumsType;
     SumsType["witnesses"] = "witnesses";
 })(SumsType = exports.SumsType || (exports.SumsType = {}));
 class Sums {
-    constructor(client, context, type) {
+    constructor(client, type, context) {
         this.client = client;
         this.context = context;
         this.type = type;
@@ -1827,18 +2683,24 @@ class Sums {
     }
     async get(minTime, maxTime) {
         const { data: { data } } = await this.client.get(this.baseUrl, {
-            min_time: minTime.toISOString(),
-            max_time: maxTime.toISOString(),
+            min_time: minTime instanceof Date ? minTime === null || minTime === void 0 ? void 0 : minTime.toISOString() : minTime,
+            max_time: maxTime === null || maxTime === void 0 ? void 0 : maxTime.toISOString(),
         });
         return new Sum_1.default(this.client, data);
     }
     get baseUrl() {
         let url = '';
-        if (this.context instanceof Hotspot_1.default) {
+        if (this.context === undefined) {
+            url = `/${this.type}/sum`;
+        }
+        else if (this.context instanceof Hotspot_1.default) {
             url = `/hotspots/${this.context.address}/${this.type}/sum`;
         }
         else if (this.context instanceof Account_1.default) {
             url = `/accounts/${this.context.address}/${this.type}/sum`;
+        }
+        else if (this.context instanceof Validator_1.default) {
+            url = `/validators/${this.context.address}/${this.type}/sum`;
         }
         else {
             throw new Error('invalid context');
@@ -1848,7 +2710,7 @@ class Sums {
 }
 exports.default = Sums;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Hotspot":22,"../models/Sum":25}],38:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Account":22,"../models/Hotspot":28,"../models/Sum":34,"../models/Validator":36}],52:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1860,15 +2722,9 @@ const Transaction_1 = __importDefault(require("../models/Transaction"));
 const PendingTransaction_1 = __importDefault(require("../models/PendingTransaction"));
 const ResourceList_1 = __importDefault(require("../ResourceList"));
 const Hotspot_1 = __importDefault(require("../models/Hotspot"));
-function transactionsUrlFromBlock(block) {
-    if (block.height) {
-        return `/blocks/${block.height}/transactions`;
-    }
-    if (block.hash) {
-        return `/blocks/hash/${block.hash}/transactions`;
-    }
-    throw new Error('Block must have either height or hash');
-}
+const Validator_1 = __importDefault(require("../models/Validator"));
+const camelcase_keys_1 = __importDefault(require("camelcase-keys"));
+const snakecase_keys_1 = __importDefault(require("snakecase-keys"));
 class Transactions {
     constructor(client, context) {
         this.client = client;
@@ -1876,56 +2732,126 @@ class Transactions {
     }
     async submit(txn) {
         const url = '/pending_transactions';
-        const { data: { data } } = await this.client.post(url, { txn });
+        const { data: { data }, } = await this.client.post(url, { txn });
         return new PendingTransaction_1.default(data);
     }
-    async get(hash) {
+    async get(hash, params) {
         const url = `/transactions/${hash}`;
-        const { data: { data } } = await this.client.get(url);
+        const { data: { data }, } = await this.client.get(url, snakecase_keys_1.default(params || {}));
         return Transaction_1.default.fromJsonObject(data);
     }
     async list(params = {}) {
+        var _a, _b;
+        const { data: { data: txns, cursor }, } = await this.client.get(this.activityUrl, {
+            cursor: params.cursor,
+            filter_types: params.filterTypes ? params.filterTypes.join() : undefined,
+            min_time: params.minTime instanceof Date ? (_a = params.minTime) === null || _a === void 0 ? void 0 : _a.toISOString() : params.minTime,
+            max_time: params.maxTime instanceof Date ? (_b = params.maxTime) === null || _b === void 0 ? void 0 : _b.toISOString() : params.maxTime,
+            limit: params.limit,
+        });
+        const data = txns.map((d) => Transaction_1.default.fromJsonObject(d));
+        return new ResourceList_1.default(data, this.list.bind(this), cursor);
+    }
+    async count(params) {
+        const url = `${this.activityUrl}/count`;
+        const { data: { data }, } = await this.client.get(url, {
+            filter_types: (params === null || params === void 0 ? void 0 : params.filterTypes) ? params.filterTypes.join() : undefined,
+        });
+        return camelcase_keys_1.default(data);
+    }
+    get activityUrl() {
+        let url;
         if (this.context instanceof Block_1.default) {
-            return this.listFromBlock(params);
+            const block = this.context;
+            if (block.height) {
+                url = `/blocks/${block.height}/transactions`;
+            }
+            else if (block.hash) {
+                url = `/blocks/hash/${block.hash}/transactions`;
+            }
+            else {
+                throw new Error('Block must have either height or hash');
+            }
         }
-        if (this.context instanceof Account_1.default) {
-            return this.listFromAccount(params);
+        else if (this.context instanceof Account_1.default) {
+            const account = this.context;
+            url = `/accounts/${account.address}/activity`;
         }
-        if (this.context instanceof Hotspot_1.default) {
-            return this.listFromHotspot(params);
+        else if (this.context instanceof Hotspot_1.default) {
+            const hotspot = this.context;
+            url = `/hotspots/${hotspot.address}/activity`;
         }
-        throw new Error('Must provide a block, account or hotspot to list transactions from');
-    }
-    async listFromBlock(params) {
-        const block = this.context;
-        const url = transactionsUrlFromBlock(block);
-        const response = await this.client.get(url, { cursor: params.cursor });
-        const { data: { data: txns, cursor } } = response;
-        const data = txns.map((d) => Transaction_1.default.fromJsonObject(d));
-        return new ResourceList_1.default(data, this.list.bind(this), cursor);
-    }
-    async listFromAccount(params) {
-        const account = this.context;
-        const url = `/accounts/${account.address}/activity`;
-        const filter_types = params.filterTypes ? params.filterTypes.join() : undefined;
-        const response = await this.client.get(url, { cursor: params.cursor, filter_types });
-        const { data: { data: txns, cursor } } = response;
-        const data = txns.map((d) => Transaction_1.default.fromJsonObject(d));
-        return new ResourceList_1.default(data, this.list.bind(this), cursor);
-    }
-    async listFromHotspot(params) {
-        const hotspot = this.context;
-        const url = `/hotspots/${hotspot.address}/activity`;
-        const filter_types = params.filterTypes ? params.filterTypes.join() : undefined;
-        const response = await this.client.get(url, { cursor: params.cursor, filter_types });
-        const { data: { data: txns, cursor } } = response;
-        const data = txns.map((d) => Transaction_1.default.fromJsonObject(d));
-        return new ResourceList_1.default(data, this.list.bind(this), cursor);
+        else if (this.context instanceof Validator_1.default) {
+            const validator = this.context;
+            url = `/validators/${validator.address}/activity`;
+        }
+        else {
+            throw new Error('Must provide a context to list transactions from');
+        }
+        return url;
     }
 }
 exports.default = Transactions;
 
-},{"../ResourceList":14,"../models/Account":16,"../models/Block":17,"../models/Hotspot":22,"../models/PendingTransaction":23,"../models/Transaction":26}],39:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Account":22,"../models/Block":23,"../models/Hotspot":28,"../models/PendingTransaction":32,"../models/Transaction":35,"../models/Validator":36,"camelcase-keys":94,"snakecase-keys":124}],53:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const Validator_1 = __importDefault(require("../models/Validator"));
+const ResourceList_1 = __importDefault(require("../ResourceList"));
+const Account_1 = __importDefault(require("../models/Account"));
+const Stats_1 = __importDefault(require("./Stats"));
+class Validators {
+    constructor(client, context) {
+        this.client = client;
+        this.context = context;
+    }
+    fromAddress(address) {
+        return new Validator_1.default(this.client, { address });
+    }
+    async search(term) {
+        const url = 'validators/name';
+        const response = await this.client.get(url, { search: term });
+        const { data: { data: validators }, } = response;
+        const data = validators.map((d) => new Validator_1.default(this.client, d));
+        return new ResourceList_1.default(data, this.list.bind(this));
+    }
+    async list(params = {}) {
+        const { validators, cursor } = await this.fetchList(params);
+        const data = validators.map((d) => new Validator_1.default(this.client, d));
+        return new ResourceList_1.default(data, this.list.bind(this), cursor);
+    }
+    async fetchList(params = {}) {
+        let url = '/validators';
+        if (this.context instanceof Account_1.default) {
+            const account = this.context;
+            url = `/accounts/${account.address}/validators`;
+        }
+        const response = await this.client.get(url, { cursor: params.cursor });
+        const { data: { data: validators, cursor }, } = response;
+        return { validators, cursor };
+    }
+    async get(address) {
+        const url = `/validators/${address}`;
+        const { data: { data: validator }, } = await this.client.get(url);
+        return new Validator_1.default(this.client, validator);
+    }
+    async elected(block) {
+        const url = block === undefined ? '/validators/elected' : `/validators/elected/${block}`;
+        const response = await this.client.get(url);
+        const { data: { data: validators }, } = response;
+        const data = validators.map((h) => new Validator_1.default(this.client, h));
+        return new ResourceList_1.default(data, this.list.bind(this));
+    }
+    get stats() {
+        return new Stats_1.default(this.client, 'validators');
+    }
+}
+exports.default = Validators;
+
+},{"../ResourceList":20,"../models/Account":22,"../models/Validator":36,"./Stats":50}],54:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -1934,17 +2860,50 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const camelcase_keys_1 = __importDefault(require("camelcase-keys"));
 class Vars {
     constructor(client) {
+        /**
+         * The chain vars needed for transaction configuration.
+         * @private
+         */
+        this.TXN_VARS = [
+            'txn_fee_multiplier',
+            'dc_payload_size',
+            'staking_fee_txn_assert_location_v1',
+            'staking_fee_txn_add_gateway_v1',
+        ];
+        this.baseUrl = '/vars';
         this.client = client;
     }
-    async get() {
-        const url = `/vars`;
-        const { data: { data: vars } } = await this.client.get(url);
+    /**
+     * Fetches the chain vars required to configure helium-js for blockchain transactions.
+     */
+    async getTransactionVars() {
+        const { data: { data: vars } } = await this.client.get(this.baseUrl, { keys: this.TXN_VARS.join(',') });
+        return camelcase_keys_1.default(vars);
+    }
+    /**
+     * Fetches the specific chain vars passed in keys. If called without keys it will fetch the
+     * transaction vars returned by {@link getTransactionVars}.
+     * @param keys array of chain vars to fetch eg 'poc_v4_prob_no_rssi'
+     */
+    async get(keys = []) {
+        if (keys.length === 0) {
+            return this.getTransactionVars();
+        }
+        const { data: { data: vars } } = await this.client.get(this.baseUrl, { keys: keys.join(',') });
+        return camelcase_keys_1.default(vars);
+    }
+    /**
+     * WARNING: This will be return over 10 MB of data.
+     * Fetches all chain vars.
+     */
+    async getAll() {
+        const { data: { data: vars } } = await this.client.get(this.baseUrl);
         return camelcase_keys_1.default(vars);
     }
 }
 exports.default = Vars;
 
-},{"camelcase-keys":72}],40:[function(require,module,exports){
+},{"camelcase-keys":94}],55:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -1969,26 +2928,44 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Hotspots_1 = __importDefault(require("./Hotspots"));
+const ResourceList_1 = __importDefault(require("../ResourceList"));
 const Sums_1 = __importStar(require("./Sums"));
+const Witness_1 = __importDefault(require("../models/Witness"));
 class Witnesses {
-    constructor(client, hotspot) {
+    constructor(client, hotspot, type = 'witnesses') {
         this.client = client;
         this.hotspot = hotspot;
+        this.type = type;
     }
     async list(params = {}) {
-        const hotspots = new Hotspots_1.default(this.client, this.hotspot);
-        return hotspots.list(params);
+        const url = `/hotspots/${this.hotspot.address}/${this.type}`;
+        const { data: { data: witnesses, cursor }, } = await this.client.get(url, { cursor: params.cursor });
+        const data = witnesses.map((witness) => new Witness_1.default(this.client, witness));
+        return new ResourceList_1.default(data, this.list.bind(this), cursor);
     }
     get sum() {
-        return new Sums_1.default(this.client, this.hotspot, Sums_1.SumsType.witnesses);
+        return new Sums_1.default(this.client, Sums_1.SumsType.witnesses, this.hotspot);
     }
 }
 exports.default = Witnesses;
 
-},{"./Hotspots":32,"./Sums":37}],41:[function(require,module,exports){
+},{"../ResourceList":20,"../models/Witness":37,"./Sums":51}],56:[function(require,module,exports){
+"use strict";
+/* eslint-disable import/prefer-default-export */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.toSnakeCase = void 0;
+const toSnakeCase = (str) => {
+    if (!str)
+        return undefined;
+    return (str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g) || [])
+        .map((x) => x.toLowerCase())
+        .join('_');
+};
+exports.toSnakeCase = toSnakeCase;
+
+},{}],57:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":43}],42:[function(require,module,exports){
+},{"./lib/axios":59}],58:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2004,6 +2981,7 @@ module.exports = function xhrAdapter(config) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
     var requestData = config.data;
     var requestHeaders = config.headers;
+    var responseType = config.responseType;
 
     if (utils.isFormData(requestData)) {
       delete requestHeaders['Content-Type']; // Let the browser set it
@@ -2024,23 +3002,14 @@ module.exports = function xhrAdapter(config) {
     // Set the request timeout in MS
     request.timeout = config.timeout;
 
-    // Listen for ready state
-    request.onreadystatechange = function handleLoad() {
-      if (!request || request.readyState !== 4) {
+    function onloadend() {
+      if (!request) {
         return;
       }
-
-      // The request errored out and we didn't get a response, this will be
-      // handled by onerror instead
-      // With one exception: request that using file: protocol, most browsers
-      // will return status as 0 even though it's a successful request
-      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
-        return;
-      }
-
       // Prepare the response
       var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
-      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
+      var responseData = !responseType || responseType === 'text' ||  responseType === 'json' ?
+        request.responseText : request.response;
       var response = {
         data: responseData,
         status: request.status,
@@ -2054,7 +3023,30 @@ module.exports = function xhrAdapter(config) {
 
       // Clean up request
       request = null;
-    };
+    }
+
+    if ('onloadend' in request) {
+      // Use onloadend if available
+      request.onloadend = onloadend;
+    } else {
+      // Listen for ready state to emulate onloadend
+      request.onreadystatechange = function handleLoad() {
+        if (!request || request.readyState !== 4) {
+          return;
+        }
+
+        // The request errored out and we didn't get a response, this will be
+        // handled by onerror instead
+        // With one exception: request that using file: protocol, most browsers
+        // will return status as 0 even though it's a successful request
+        if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
+          return;
+        }
+        // readystate handler is calling before onerror or ontimeout handlers,
+        // so we should call onloadend on the next 'tick'
+        setTimeout(onloadend);
+      };
+    }
 
     // Handle browser request cancellation (as opposed to a manual cancellation)
     request.onabort = function handleAbort() {
@@ -2084,7 +3076,10 @@ module.exports = function xhrAdapter(config) {
       if (config.timeoutErrorMessage) {
         timeoutErrorMessage = config.timeoutErrorMessage;
       }
-      reject(createError(timeoutErrorMessage, config, 'ECONNABORTED',
+      reject(createError(
+        timeoutErrorMessage,
+        config,
+        config.transitional && config.transitional.clarifyTimeoutError ? 'ETIMEDOUT' : 'ECONNABORTED',
         request));
 
       // Clean up request
@@ -2124,16 +3119,8 @@ module.exports = function xhrAdapter(config) {
     }
 
     // Add responseType to request if needed
-    if (config.responseType) {
-      try {
-        request.responseType = config.responseType;
-      } catch (e) {
-        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
-        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
-        if (config.responseType !== 'json') {
-          throw e;
-        }
-      }
+    if (responseType && responseType !== 'json') {
+      request.responseType = config.responseType;
     }
 
     // Handle progress if needed
@@ -2169,7 +3156,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":49,"../core/createError":50,"./../core/settle":54,"./../helpers/buildURL":58,"./../helpers/cookies":60,"./../helpers/isURLSameOrigin":63,"./../helpers/parseHeaders":65,"./../utils":67}],43:[function(require,module,exports){
+},{"../core/buildFullPath":65,"../core/createError":66,"./../core/settle":70,"./../helpers/buildURL":74,"./../helpers/cookies":76,"./../helpers/isURLSameOrigin":79,"./../helpers/parseHeaders":81,"./../utils":84}],59:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -2227,7 +3214,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":44,"./cancel/CancelToken":45,"./cancel/isCancel":46,"./core/Axios":47,"./core/mergeConfig":53,"./defaults":56,"./helpers/bind":57,"./helpers/isAxiosError":62,"./helpers/spread":66,"./utils":67}],44:[function(require,module,exports){
+},{"./cancel/Cancel":60,"./cancel/CancelToken":61,"./cancel/isCancel":62,"./core/Axios":63,"./core/mergeConfig":69,"./defaults":72,"./helpers/bind":73,"./helpers/isAxiosError":78,"./helpers/spread":82,"./utils":84}],60:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2248,7 +3235,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],45:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -2307,14 +3294,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":44}],46:[function(require,module,exports){
+},{"./Cancel":60}],62:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],47:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2322,7 +3309,9 @@ var buildURL = require('../helpers/buildURL');
 var InterceptorManager = require('./InterceptorManager');
 var dispatchRequest = require('./dispatchRequest');
 var mergeConfig = require('./mergeConfig');
+var validator = require('../helpers/validator');
 
+var validators = validator.validators;
 /**
  * Create a new instance of Axios
  *
@@ -2362,20 +3351,71 @@ Axios.prototype.request = function request(config) {
     config.method = 'get';
   }
 
-  // Hook up interceptors middleware
-  var chain = [dispatchRequest, undefined];
-  var promise = Promise.resolve(config);
+  var transitional = config.transitional;
 
+  if (transitional !== undefined) {
+    validator.assertOptions(transitional, {
+      silentJSONParsing: validators.transitional(validators.boolean, '1.0.0'),
+      forcedJSONParsing: validators.transitional(validators.boolean, '1.0.0'),
+      clarifyTimeoutError: validators.transitional(validators.boolean, '1.0.0')
+    }, false);
+  }
+
+  // filter out skipped interceptors
+  var requestInterceptorChain = [];
+  var synchronousRequestInterceptors = true;
   this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-    chain.unshift(interceptor.fulfilled, interceptor.rejected);
+    if (typeof interceptor.runWhen === 'function' && interceptor.runWhen(config) === false) {
+      return;
+    }
+
+    synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
+
+    requestInterceptorChain.unshift(interceptor.fulfilled, interceptor.rejected);
   });
 
+  var responseInterceptorChain = [];
   this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
-    chain.push(interceptor.fulfilled, interceptor.rejected);
+    responseInterceptorChain.push(interceptor.fulfilled, interceptor.rejected);
   });
 
-  while (chain.length) {
-    promise = promise.then(chain.shift(), chain.shift());
+  var promise;
+
+  if (!synchronousRequestInterceptors) {
+    var chain = [dispatchRequest, undefined];
+
+    Array.prototype.unshift.apply(chain, requestInterceptorChain);
+    chain = chain.concat(responseInterceptorChain);
+
+    promise = Promise.resolve(config);
+    while (chain.length) {
+      promise = promise.then(chain.shift(), chain.shift());
+    }
+
+    return promise;
+  }
+
+
+  var newConfig = config;
+  while (requestInterceptorChain.length) {
+    var onFulfilled = requestInterceptorChain.shift();
+    var onRejected = requestInterceptorChain.shift();
+    try {
+      newConfig = onFulfilled(newConfig);
+    } catch (error) {
+      onRejected(error);
+      break;
+    }
+  }
+
+  try {
+    promise = dispatchRequest(newConfig);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+
+  while (responseInterceptorChain.length) {
+    promise = promise.then(responseInterceptorChain.shift(), responseInterceptorChain.shift());
   }
 
   return promise;
@@ -2411,7 +3451,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":58,"./../utils":67,"./InterceptorManager":48,"./dispatchRequest":51,"./mergeConfig":53}],48:[function(require,module,exports){
+},{"../helpers/buildURL":74,"../helpers/validator":83,"./../utils":84,"./InterceptorManager":64,"./dispatchRequest":67,"./mergeConfig":69}],64:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2428,10 +3468,12 @@ function InterceptorManager() {
  *
  * @return {Number} An ID used to remove interceptor later
  */
-InterceptorManager.prototype.use = function use(fulfilled, rejected) {
+InterceptorManager.prototype.use = function use(fulfilled, rejected, options) {
   this.handlers.push({
     fulfilled: fulfilled,
-    rejected: rejected
+    rejected: rejected,
+    synchronous: options ? options.synchronous : false,
+    runWhen: options ? options.runWhen : null
   });
   return this.handlers.length - 1;
 };
@@ -2465,7 +3507,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":67}],49:[function(require,module,exports){
+},{"./../utils":84}],65:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -2487,7 +3529,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":59,"../helpers/isAbsoluteURL":61}],50:[function(require,module,exports){
+},{"../helpers/combineURLs":75,"../helpers/isAbsoluteURL":77}],66:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -2507,7 +3549,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":52}],51:[function(require,module,exports){
+},{"./enhanceError":68}],67:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2537,7 +3579,8 @@ module.exports = function dispatchRequest(config) {
   config.headers = config.headers || {};
 
   // Transform request data
-  config.data = transformData(
+  config.data = transformData.call(
+    config,
     config.data,
     config.headers,
     config.transformRequest
@@ -2563,7 +3606,8 @@ module.exports = function dispatchRequest(config) {
     throwIfCancellationRequested(config);
 
     // Transform response data
-    response.data = transformData(
+    response.data = transformData.call(
+      config,
       response.data,
       response.headers,
       config.transformResponse
@@ -2576,7 +3620,8 @@ module.exports = function dispatchRequest(config) {
 
       // Transform response data
       if (reason && reason.response) {
-        reason.response.data = transformData(
+        reason.response.data = transformData.call(
+          config,
           reason.response.data,
           reason.response.headers,
           config.transformResponse
@@ -2588,7 +3633,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":46,"../defaults":56,"./../utils":67,"./transformData":55}],52:[function(require,module,exports){
+},{"../cancel/isCancel":62,"../defaults":72,"./../utils":84,"./transformData":71}],68:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2632,7 +3677,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],53:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -2721,7 +3766,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":67}],54:[function(require,module,exports){
+},{"../utils":84}],70:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -2748,10 +3793,11 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":50}],55:[function(require,module,exports){
+},{"./createError":66}],71:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
+var defaults = require('./../defaults');
 
 /**
  * Transform the data for a request or a response
@@ -2762,20 +3808,22 @@ var utils = require('./../utils');
  * @returns {*} The resulting transformed data
  */
 module.exports = function transformData(data, headers, fns) {
+  var context = this || defaults;
   /*eslint no-param-reassign:0*/
   utils.forEach(fns, function transform(fn) {
-    data = fn(data, headers);
+    data = fn.call(context, data, headers);
   });
 
   return data;
 };
 
-},{"./../utils":67}],56:[function(require,module,exports){
+},{"./../defaults":72,"./../utils":84}],72:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
 var utils = require('./utils');
 var normalizeHeaderName = require('./helpers/normalizeHeaderName');
+var enhanceError = require('./core/enhanceError');
 
 var DEFAULT_CONTENT_TYPE = {
   'Content-Type': 'application/x-www-form-urlencoded'
@@ -2799,12 +3847,35 @@ function getDefaultAdapter() {
   return adapter;
 }
 
+function stringifySafely(rawValue, parser, encoder) {
+  if (utils.isString(rawValue)) {
+    try {
+      (parser || JSON.parse)(rawValue);
+      return utils.trim(rawValue);
+    } catch (e) {
+      if (e.name !== 'SyntaxError') {
+        throw e;
+      }
+    }
+  }
+
+  return (encoder || JSON.stringify)(rawValue);
+}
+
 var defaults = {
+
+  transitional: {
+    silentJSONParsing: true,
+    forcedJSONParsing: true,
+    clarifyTimeoutError: false
+  },
+
   adapter: getDefaultAdapter(),
 
   transformRequest: [function transformRequest(data, headers) {
     normalizeHeaderName(headers, 'Accept');
     normalizeHeaderName(headers, 'Content-Type');
+
     if (utils.isFormData(data) ||
       utils.isArrayBuffer(data) ||
       utils.isBuffer(data) ||
@@ -2821,20 +3892,32 @@ var defaults = {
       setContentTypeIfUnset(headers, 'application/x-www-form-urlencoded;charset=utf-8');
       return data.toString();
     }
-    if (utils.isObject(data)) {
-      setContentTypeIfUnset(headers, 'application/json;charset=utf-8');
-      return JSON.stringify(data);
+    if (utils.isObject(data) || (headers && headers['Content-Type'] === 'application/json')) {
+      setContentTypeIfUnset(headers, 'application/json');
+      return stringifySafely(data);
     }
     return data;
   }],
 
   transformResponse: [function transformResponse(data) {
-    /*eslint no-param-reassign:0*/
-    if (typeof data === 'string') {
+    var transitional = this.transitional;
+    var silentJSONParsing = transitional && transitional.silentJSONParsing;
+    var forcedJSONParsing = transitional && transitional.forcedJSONParsing;
+    var strictJSONParsing = !silentJSONParsing && this.responseType === 'json';
+
+    if (strictJSONParsing || (forcedJSONParsing && utils.isString(data) && data.length)) {
       try {
-        data = JSON.parse(data);
-      } catch (e) { /* Ignore */ }
+        return JSON.parse(data);
+      } catch (e) {
+        if (strictJSONParsing) {
+          if (e.name === 'SyntaxError') {
+            throw enhanceError(e, this, 'E_JSON_PARSE');
+          }
+          throw e;
+        }
+      }
     }
+
     return data;
   }],
 
@@ -2872,7 +3955,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":42,"./adapters/xhr":42,"./helpers/normalizeHeaderName":64,"./utils":67,"_process":86}],57:[function(require,module,exports){
+},{"./adapters/http":58,"./adapters/xhr":58,"./core/enhanceError":68,"./helpers/normalizeHeaderName":80,"./utils":84,"_process":113}],73:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -2885,7 +3968,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],58:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -2957,7 +4040,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":67}],59:[function(require,module,exports){
+},{"./../utils":84}],75:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2973,7 +4056,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],60:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -3028,7 +4111,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":67}],61:[function(require,module,exports){
+},{"./../utils":84}],77:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3044,7 +4127,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],62:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3057,7 +4140,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],63:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -3127,7 +4210,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":67}],64:[function(require,module,exports){
+},{"./../utils":84}],80:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -3141,7 +4224,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":67}],65:[function(require,module,exports){
+},{"../utils":84}],81:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -3196,7 +4279,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":67}],66:[function(require,module,exports){
+},{"./../utils":84}],82:[function(require,module,exports){
 'use strict';
 
 /**
@@ -3225,12 +4308,117 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],67:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
+'use strict';
+
+var pkg = require('./../../package.json');
+
+var validators = {};
+
+// eslint-disable-next-line func-names
+['object', 'boolean', 'number', 'function', 'string', 'symbol'].forEach(function(type, i) {
+  validators[type] = function validator(thing) {
+    return typeof thing === type || 'a' + (i < 1 ? 'n ' : ' ') + type;
+  };
+});
+
+var deprecatedWarnings = {};
+var currentVerArr = pkg.version.split('.');
+
+/**
+ * Compare package versions
+ * @param {string} version
+ * @param {string?} thanVersion
+ * @returns {boolean}
+ */
+function isOlderVersion(version, thanVersion) {
+  var pkgVersionArr = thanVersion ? thanVersion.split('.') : currentVerArr;
+  var destVer = version.split('.');
+  for (var i = 0; i < 3; i++) {
+    if (pkgVersionArr[i] > destVer[i]) {
+      return true;
+    } else if (pkgVersionArr[i] < destVer[i]) {
+      return false;
+    }
+  }
+  return false;
+}
+
+/**
+ * Transitional option validator
+ * @param {function|boolean?} validator
+ * @param {string?} version
+ * @param {string} message
+ * @returns {function}
+ */
+validators.transitional = function transitional(validator, version, message) {
+  var isDeprecated = version && isOlderVersion(version);
+
+  function formatMessage(opt, desc) {
+    return '[Axios v' + pkg.version + '] Transitional option \'' + opt + '\'' + desc + (message ? '. ' + message : '');
+  }
+
+  // eslint-disable-next-line func-names
+  return function(value, opt, opts) {
+    if (validator === false) {
+      throw new Error(formatMessage(opt, ' has been removed in ' + version));
+    }
+
+    if (isDeprecated && !deprecatedWarnings[opt]) {
+      deprecatedWarnings[opt] = true;
+      // eslint-disable-next-line no-console
+      console.warn(
+        formatMessage(
+          opt,
+          ' has been deprecated since v' + version + ' and will be removed in the near future'
+        )
+      );
+    }
+
+    return validator ? validator(value, opt, opts) : true;
+  };
+};
+
+/**
+ * Assert object's properties type
+ * @param {object} options
+ * @param {object} schema
+ * @param {boolean?} allowUnknown
+ */
+
+function assertOptions(options, schema, allowUnknown) {
+  if (typeof options !== 'object') {
+    throw new TypeError('options must be an object');
+  }
+  var keys = Object.keys(options);
+  var i = keys.length;
+  while (i-- > 0) {
+    var opt = keys[i];
+    var validator = schema[opt];
+    if (validator) {
+      var value = options[opt];
+      var result = value === undefined || validator(value, opt, options);
+      if (result !== true) {
+        throw new TypeError('option ' + opt + ' must be ' + result);
+      }
+      continue;
+    }
+    if (allowUnknown !== true) {
+      throw Error('Unknown option ' + opt);
+    }
+  }
+}
+
+module.exports = {
+  isOlderVersion: isOlderVersion,
+  assertOptions: assertOptions,
+  validators: validators
+};
+
+},{"./../../package.json":85}],84:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
-
-/*global toString:true*/
 
 // utils is a library of generic helper functions non-specific to axios
 
@@ -3415,7 +4603,7 @@ function isURLSearchParams(val) {
  * @returns {String} The String freed of excess whitespace
  */
 function trim(str) {
-  return str.replace(/^\s*/, '').replace(/\s*$/, '');
+  return str.trim ? str.trim() : str.replace(/^\s+|\s+$/g, '');
 }
 
 /**
@@ -3578,15 +4766,374 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":57}],68:[function(require,module,exports){
+},{"./helpers/bind":73}],85:[function(require,module,exports){
+module.exports={
+  "name": "axios",
+  "version": "0.21.4",
+  "description": "Promise based HTTP client for the browser and node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "grunt test",
+    "start": "node ./sandbox/server.js",
+    "build": "NODE_ENV=production grunt build",
+    "preversion": "npm test",
+    "version": "npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json",
+    "postversion": "git push && git push --tags",
+    "examples": "node ./examples/server.js",
+    "coveralls": "cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "fix": "eslint --fix lib/**/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/axios/axios.git"
+  },
+  "keywords": [
+    "xhr",
+    "http",
+    "ajax",
+    "promise",
+    "node"
+  ],
+  "author": "Matt Zabriskie",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/axios/axios/issues"
+  },
+  "homepage": "https://axios-http.com",
+  "devDependencies": {
+    "coveralls": "^3.0.0",
+    "es6-promise": "^4.2.4",
+    "grunt": "^1.3.0",
+    "grunt-banner": "^0.6.0",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-eslint": "^23.0.0",
+    "grunt-karma": "^4.0.0",
+    "grunt-mocha-test": "^0.13.3",
+    "grunt-ts": "^6.0.0-beta.19",
+    "grunt-webpack": "^4.0.2",
+    "istanbul-instrumenter-loader": "^1.0.0",
+    "jasmine-core": "^2.4.1",
+    "karma": "^6.3.2",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-firefox-launcher": "^2.1.0",
+    "karma-jasmine": "^1.1.1",
+    "karma-jasmine-ajax": "^0.1.13",
+    "karma-safari-launcher": "^1.0.0",
+    "karma-sauce-launcher": "^4.3.6",
+    "karma-sinon": "^1.0.5",
+    "karma-sourcemap-loader": "^0.3.8",
+    "karma-webpack": "^4.0.2",
+    "load-grunt-tasks": "^3.5.2",
+    "minimist": "^1.2.0",
+    "mocha": "^8.2.1",
+    "sinon": "^4.5.0",
+    "terser-webpack-plugin": "^4.2.3",
+    "typescript": "^4.0.5",
+    "url-search-params": "^0.10.0",
+    "webpack": "^4.44.2",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "browser": {
+    "./lib/adapters/http.js": "./lib/adapters/xhr.js"
+  },
+  "jsdelivr": "dist/axios.min.js",
+  "unpkg": "dist/axios.min.js",
+  "typings": "./index.d.ts",
+  "dependencies": {
+    "follow-redirects": "^1.14.0"
+  },
+  "bundlesize": [
+    {
+      "path": "./dist/axios.min.js",
+      "threshold": "5kB"
+    }
+  ]
+}
+
+},{}],86:[function(require,module,exports){
+'use strict'
+// base-x encoding / decoding
+// Copyright (c) 2018 base-x contributors
+// Copyright (c) 2014-2018 The Bitcoin Core developers (base58.cpp)
+// Distributed under the MIT software license, see the accompanying
+// file LICENSE or http://www.opensource.org/licenses/mit-license.php.
+// @ts-ignore
+var _Buffer = require('safe-buffer').Buffer
+function base (ALPHABET) {
+  if (ALPHABET.length >= 255) { throw new TypeError('Alphabet too long') }
+  var BASE_MAP = new Uint8Array(256)
+  for (var j = 0; j < BASE_MAP.length; j++) {
+    BASE_MAP[j] = 255
+  }
+  for (var i = 0; i < ALPHABET.length; i++) {
+    var x = ALPHABET.charAt(i)
+    var xc = x.charCodeAt(0)
+    if (BASE_MAP[xc] !== 255) { throw new TypeError(x + ' is ambiguous') }
+    BASE_MAP[xc] = i
+  }
+  var BASE = ALPHABET.length
+  var LEADER = ALPHABET.charAt(0)
+  var FACTOR = Math.log(BASE) / Math.log(256) // log(BASE) / log(256), rounded up
+  var iFACTOR = Math.log(256) / Math.log(BASE) // log(256) / log(BASE), rounded up
+  function encode (source) {
+    if (Array.isArray(source) || source instanceof Uint8Array) { source = _Buffer.from(source) }
+    if (!_Buffer.isBuffer(source)) { throw new TypeError('Expected Buffer') }
+    if (source.length === 0) { return '' }
+        // Skip & count leading zeroes.
+    var zeroes = 0
+    var length = 0
+    var pbegin = 0
+    var pend = source.length
+    while (pbegin !== pend && source[pbegin] === 0) {
+      pbegin++
+      zeroes++
+    }
+        // Allocate enough space in big-endian base58 representation.
+    var size = ((pend - pbegin) * iFACTOR + 1) >>> 0
+    var b58 = new Uint8Array(size)
+        // Process the bytes.
+    while (pbegin !== pend) {
+      var carry = source[pbegin]
+            // Apply "b58 = b58 * 256 + ch".
+      var i = 0
+      for (var it1 = size - 1; (carry !== 0 || i < length) && (it1 !== -1); it1--, i++) {
+        carry += (256 * b58[it1]) >>> 0
+        b58[it1] = (carry % BASE) >>> 0
+        carry = (carry / BASE) >>> 0
+      }
+      if (carry !== 0) { throw new Error('Non-zero carry') }
+      length = i
+      pbegin++
+    }
+        // Skip leading zeroes in base58 result.
+    var it2 = size - length
+    while (it2 !== size && b58[it2] === 0) {
+      it2++
+    }
+        // Translate the result into a string.
+    var str = LEADER.repeat(zeroes)
+    for (; it2 < size; ++it2) { str += ALPHABET.charAt(b58[it2]) }
+    return str
+  }
+  function decodeUnsafe (source) {
+    if (typeof source !== 'string') { throw new TypeError('Expected String') }
+    if (source.length === 0) { return _Buffer.alloc(0) }
+    var psz = 0
+        // Skip and count leading '1's.
+    var zeroes = 0
+    var length = 0
+    while (source[psz] === LEADER) {
+      zeroes++
+      psz++
+    }
+        // Allocate enough space in big-endian base256 representation.
+    var size = (((source.length - psz) * FACTOR) + 1) >>> 0 // log(58) / log(256), rounded up.
+    var b256 = new Uint8Array(size)
+        // Process the characters.
+    while (source[psz]) {
+            // Decode character
+      var carry = BASE_MAP[source.charCodeAt(psz)]
+            // Invalid character
+      if (carry === 255) { return }
+      var i = 0
+      for (var it3 = size - 1; (carry !== 0 || i < length) && (it3 !== -1); it3--, i++) {
+        carry += (BASE * b256[it3]) >>> 0
+        b256[it3] = (carry % 256) >>> 0
+        carry = (carry / 256) >>> 0
+      }
+      if (carry !== 0) { throw new Error('Non-zero carry') }
+      length = i
+      psz++
+    }
+        // Skip leading zeroes in b256.
+    var it4 = size - length
+    while (it4 !== size && b256[it4] === 0) {
+      it4++
+    }
+    var vch = _Buffer.allocUnsafe(zeroes + (size - it4))
+    vch.fill(0x00, 0, zeroes)
+    var j = zeroes
+    while (it4 !== size) {
+      vch[j++] = b256[it4++]
+    }
+    return vch
+  }
+  function decode (string) {
+    var buffer = decodeUnsafe(string)
+    if (buffer) { return buffer }
+    throw new Error('Non-base' + BASE + ' character')
+  }
+  return {
+    encode: encode,
+    decodeUnsafe: decodeUnsafe,
+    decode: decode
+  }
+}
+module.exports = base
+
+},{"safe-buffer":121}],87:[function(require,module,exports){
+'use strict'
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+},{}],88:[function(require,module,exports){
 ;(function (globalObject) {
   'use strict';
 
 /*
- *      bignumber.js v9.0.1
+ *      bignumber.js v9.0.2
  *      A JavaScript library for arbitrary-precision arithmetic.
  *      https://github.com/MikeMcl/bignumber.js
- *      Copyright (c) 2020 Michael Mclaughlin <M8ch88l@gmail.com>
+ *      Copyright (c) 2021 Michael Mclaughlin <M8ch88l@gmail.com>
  *      MIT Licensed.
  *
  *      BigNumber.prototype methods     |  BigNumber methods
@@ -3726,7 +5273,7 @@ module.exports = {
 
       // The maximum number of significant digits of the result of the exponentiatedBy operation.
       // If POW_PRECISION is 0, there will be unlimited significant digits.
-      POW_PRECISION = 0,                    // 0 to MAX
+      POW_PRECISION = 0,                       // 0 to MAX
 
       // The format specification used by the BigNumber.prototype.toFormat method.
       FORMAT = {
@@ -3736,14 +5283,15 @@ module.exports = {
         groupSeparator: ',',
         decimalSeparator: '.',
         fractionGroupSize: 0,
-        fractionGroupSeparator: '\xA0',      // non-breaking space
+        fractionGroupSeparator: '\xA0',        // non-breaking space
         suffix: ''
       },
 
       // The alphabet used for base conversion. It must be at least 2 characters long, with no '+',
       // '-', '.', whitespace, or repeated character.
       // '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_'
-      ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
+      ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz',
+      alphabetHasNormalDecimalDigits = true;
 
 
     //------------------------------------------------------------------------------------------
@@ -3833,7 +5381,7 @@ module.exports = {
 
         // Allow exponential notation to be used with base 10 argument, while
         // also rounding to DECIMAL_PLACES as with other bases.
-        if (b == 10) {
+        if (b == 10 && alphabetHasNormalDecimalDigits) {
           x = new BigNumber(v);
           return round(x, DECIMAL_PLACES + x.e + 1, ROUNDING_MODE);
         }
@@ -4125,6 +5673,7 @@ module.exports = {
             // Disallow if less than two characters,
             // or if it contains '+', '-', '.', whitespace, or a repeated character.
             if (typeof v == 'string' && !/^.?$|[+\-.\s]|(.).*\1/.test(v)) {
+              alphabetHasNormalDecimalDigits = v.slice(0, 10) == '0123456789';
               ALPHABET = v;
             } else {
               throw Error
@@ -6299,7 +7848,7 @@ module.exports = {
           str = e <= TO_EXP_NEG || e >= TO_EXP_POS
            ? toExponential(coeffToString(n.c), e)
            : toFixedPoint(coeffToString(n.c), e, '0');
-        } else if (b === 10) {
+        } else if (b === 10 && alphabetHasNormalDecimalDigits) {
           n = round(new BigNumber(n), DECIMAL_PLACES + e + 1, ROUNDING_MODE);
           str = toFixedPoint(coeffToString(n.c), n.e, '0');
         } else {
@@ -6482,9 +8031,1796 @@ module.exports = {
   }
 })(this);
 
-},{}],69:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 
-},{}],70:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
+var basex = require('base-x')
+var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
+module.exports = basex(ALPHABET)
+
+},{"base-x":86}],91:[function(require,module,exports){
+(function (Buffer){(function (){
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
+
+'use strict'
+
+var base64 = require('base64-js')
+var ieee754 = require('ieee754')
+
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+
+var K_MAX_LENGTH = 0x7fffffff
+exports.kMaxLength = K_MAX_LENGTH
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Print warning and recommend using `buffer` v4.x which has an Object
+ *               implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * We report that the browser does not support typed arrays if the are not subclassable
+ * using __proto__. Firefox 4-29 lacks support for adding new properties to `Uint8Array`
+ * (See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438). IE 10 lacks support
+ * for __proto__ and has a buggy typed array implementation.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = typedArraySupport()
+
+if (!Buffer.TYPED_ARRAY_SUPPORT && typeof console !== 'undefined' &&
+    typeof console.error === 'function') {
+  console.error(
+    'This browser lacks typed array (Uint8Array) support which is required by ' +
+    '`buffer` v5.x. Use `buffer` v4.x if you require old browser support.'
+  )
+}
+
+function typedArraySupport () {
+  // Can typed array instances can be augmented?
+  try {
+    var arr = new Uint8Array(1)
+    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } }
+    return arr.foo() === 42
+  } catch (e) {
+    return false
+  }
+}
+
+Object.defineProperty(Buffer.prototype, 'parent', {
+  enumerable: true,
+  get: function () {
+    if (!Buffer.isBuffer(this)) return undefined
+    return this.buffer
+  }
+})
+
+Object.defineProperty(Buffer.prototype, 'offset', {
+  enumerable: true,
+  get: function () {
+    if (!Buffer.isBuffer(this)) return undefined
+    return this.byteOffset
+  }
+})
+
+function createBuffer (length) {
+  if (length > K_MAX_LENGTH) {
+    throw new RangeError('The value "' + length + '" is invalid for option "size"')
+  }
+  // Return an augmented `Uint8Array` instance
+  var buf = new Uint8Array(length)
+  buf.__proto__ = Buffer.prototype
+  return buf
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+
+function Buffer (arg, encodingOrOffset, length) {
+  // Common case.
+  if (typeof arg === 'number') {
+    if (typeof encodingOrOffset === 'string') {
+      throw new TypeError(
+        'The "string" argument must be of type string. Received type number'
+      )
+    }
+    return allocUnsafe(arg)
+  }
+  return from(arg, encodingOrOffset, length)
+}
+
+// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+if (typeof Symbol !== 'undefined' && Symbol.species != null &&
+    Buffer[Symbol.species] === Buffer) {
+  Object.defineProperty(Buffer, Symbol.species, {
+    value: null,
+    configurable: true,
+    enumerable: false,
+    writable: false
+  })
+}
+
+Buffer.poolSize = 8192 // not used by this implementation
+
+function from (value, encodingOrOffset, length) {
+  if (typeof value === 'string') {
+    return fromString(value, encodingOrOffset)
+  }
+
+  if (ArrayBuffer.isView(value)) {
+    return fromArrayLike(value)
+  }
+
+  if (value == null) {
+    throw TypeError(
+      'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
+      'or Array-like Object. Received type ' + (typeof value)
+    )
+  }
+
+  if (isInstance(value, ArrayBuffer) ||
+      (value && isInstance(value.buffer, ArrayBuffer))) {
+    return fromArrayBuffer(value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'number') {
+    throw new TypeError(
+      'The "value" argument must not be of type number. Received type number'
+    )
+  }
+
+  var valueOf = value.valueOf && value.valueOf()
+  if (valueOf != null && valueOf !== value) {
+    return Buffer.from(valueOf, encodingOrOffset, length)
+  }
+
+  var b = fromObject(value)
+  if (b) return b
+
+  if (typeof Symbol !== 'undefined' && Symbol.toPrimitive != null &&
+      typeof value[Symbol.toPrimitive] === 'function') {
+    return Buffer.from(
+      value[Symbol.toPrimitive]('string'), encodingOrOffset, length
+    )
+  }
+
+  throw new TypeError(
+    'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
+    'or Array-like Object. Received type ' + (typeof value)
+  )
+}
+
+/**
+ * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+ * if value is a number.
+ * Buffer.from(str[, encoding])
+ * Buffer.from(array)
+ * Buffer.from(buffer)
+ * Buffer.from(arrayBuffer[, byteOffset[, length]])
+ **/
+Buffer.from = function (value, encodingOrOffset, length) {
+  return from(value, encodingOrOffset, length)
+}
+
+// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
+// https://github.com/feross/buffer/pull/148
+Buffer.prototype.__proto__ = Uint8Array.prototype
+Buffer.__proto__ = Uint8Array
+
+function assertSize (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('"size" argument must be of type number')
+  } else if (size < 0) {
+    throw new RangeError('The value "' + size + '" is invalid for option "size"')
+  }
+}
+
+function alloc (size, fill, encoding) {
+  assertSize(size)
+  if (size <= 0) {
+    return createBuffer(size)
+  }
+  if (fill !== undefined) {
+    // Only pay attention to encoding if it's a string. This
+    // prevents accidentally sending in a number that would
+    // be interpretted as a start offset.
+    return typeof encoding === 'string'
+      ? createBuffer(size).fill(fill, encoding)
+      : createBuffer(size).fill(fill)
+  }
+  return createBuffer(size)
+}
+
+/**
+ * Creates a new filled Buffer instance.
+ * alloc(size[, fill[, encoding]])
+ **/
+Buffer.alloc = function (size, fill, encoding) {
+  return alloc(size, fill, encoding)
+}
+
+function allocUnsafe (size) {
+  assertSize(size)
+  return createBuffer(size < 0 ? 0 : checked(size) | 0)
+}
+
+/**
+ * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+ * */
+Buffer.allocUnsafe = function (size) {
+  return allocUnsafe(size)
+}
+/**
+ * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+ */
+Buffer.allocUnsafeSlow = function (size) {
+  return allocUnsafe(size)
+}
+
+function fromString (string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') {
+    encoding = 'utf8'
+  }
+
+  if (!Buffer.isEncoding(encoding)) {
+    throw new TypeError('Unknown encoding: ' + encoding)
+  }
+
+  var length = byteLength(string, encoding) | 0
+  var buf = createBuffer(length)
+
+  var actual = buf.write(string, encoding)
+
+  if (actual !== length) {
+    // Writing a hex string, for example, that contains invalid characters will
+    // cause everything after the first invalid character to be ignored. (e.g.
+    // 'abxxcd' will be treated as 'ab')
+    buf = buf.slice(0, actual)
+  }
+
+  return buf
+}
+
+function fromArrayLike (array) {
+  var length = array.length < 0 ? 0 : checked(array.length) | 0
+  var buf = createBuffer(length)
+  for (var i = 0; i < length; i += 1) {
+    buf[i] = array[i] & 255
+  }
+  return buf
+}
+
+function fromArrayBuffer (array, byteOffset, length) {
+  if (byteOffset < 0 || array.byteLength < byteOffset) {
+    throw new RangeError('"offset" is outside of buffer bounds')
+  }
+
+  if (array.byteLength < byteOffset + (length || 0)) {
+    throw new RangeError('"length" is outside of buffer bounds')
+  }
+
+  var buf
+  if (byteOffset === undefined && length === undefined) {
+    buf = new Uint8Array(array)
+  } else if (length === undefined) {
+    buf = new Uint8Array(array, byteOffset)
+  } else {
+    buf = new Uint8Array(array, byteOffset, length)
+  }
+
+  // Return an augmented `Uint8Array` instance
+  buf.__proto__ = Buffer.prototype
+  return buf
+}
+
+function fromObject (obj) {
+  if (Buffer.isBuffer(obj)) {
+    var len = checked(obj.length) | 0
+    var buf = createBuffer(len)
+
+    if (buf.length === 0) {
+      return buf
+    }
+
+    obj.copy(buf, 0, 0, len)
+    return buf
+  }
+
+  if (obj.length !== undefined) {
+    if (typeof obj.length !== 'number' || numberIsNaN(obj.length)) {
+      return createBuffer(0)
+    }
+    return fromArrayLike(obj)
+  }
+
+  if (obj.type === 'Buffer' && Array.isArray(obj.data)) {
+    return fromArrayLike(obj.data)
+  }
+}
+
+function checked (length) {
+  // Note: cannot use `length < K_MAX_LENGTH` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= K_MAX_LENGTH) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + K_MAX_LENGTH.toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (length) {
+  if (+length != length) { // eslint-disable-line eqeqeq
+    length = 0
+  }
+  return Buffer.alloc(+length)
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return b != null && b._isBuffer === true &&
+    b !== Buffer.prototype // so Buffer.isBuffer(Buffer.prototype) will be false
+}
+
+Buffer.compare = function compare (a, b) {
+  if (isInstance(a, Uint8Array)) a = Buffer.from(a, a.offset, a.byteLength)
+  if (isInstance(b, Uint8Array)) b = Buffer.from(b, b.offset, b.byteLength)
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError(
+      'The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array'
+    )
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i]
+      y = b[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'latin1':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!Array.isArray(list)) {
+    throw new TypeError('"list" argument must be an Array of Buffers')
+  }
+
+  if (list.length === 0) {
+    return Buffer.alloc(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; ++i) {
+      length += list[i].length
+    }
+  }
+
+  var buffer = Buffer.allocUnsafe(length)
+  var pos = 0
+  for (i = 0; i < list.length; ++i) {
+    var buf = list[i]
+    if (isInstance(buf, Uint8Array)) {
+      buf = Buffer.from(buf)
+    }
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
+    pos += buf.length
+  }
+  return buffer
+}
+
+function byteLength (string, encoding) {
+  if (Buffer.isBuffer(string)) {
+    return string.length
+  }
+  if (ArrayBuffer.isView(string) || isInstance(string, ArrayBuffer)) {
+    return string.byteLength
+  }
+  if (typeof string !== 'string') {
+    throw new TypeError(
+      'The "string" argument must be one of type string, Buffer, or ArrayBuffer. ' +
+      'Received type ' + typeof string
+    )
+  }
+
+  var len = string.length
+  var mustMatch = (arguments.length > 2 && arguments[2] === true)
+  if (!mustMatch && len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+        return len
+      case 'utf8':
+      case 'utf-8':
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) {
+          return mustMatch ? -1 : utf8ToBytes(string).length // assume utf8
+        }
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+  // property of a typed array.
+
+  // This behaves neither like String nor Uint8Array in that we set start/end
+  // to their upper/lower bounds if the value passed is out of range.
+  // undefined is handled specially as per ECMA-262 6th Edition,
+  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+  if (start === undefined || start < 0) {
+    start = 0
+  }
+  // Return early if start > this.length. Done here to prevent potential uint32
+  // coercion fail below.
+  if (start > this.length) {
+    return ''
+  }
+
+  if (end === undefined || end > this.length) {
+    end = this.length
+  }
+
+  if (end <= 0) {
+    return ''
+  }
+
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  end >>>= 0
+  start >>>= 0
+
+  if (end <= start) {
+    return ''
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Slice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// This property is used by `Buffer.isBuffer` (and the `is-buffer` npm package)
+// to detect a Buffer instance. It's not possible to use `instanceof Buffer`
+// reliably in a browserify context because there could be multiple different
+// copies of the 'buffer' package in use. This method works even for Buffer
+// instances that were created from another copy of the `buffer` package.
+// See: https://github.com/feross/buffer/issues/154
+Buffer.prototype._isBuffer = true
+
+function swap (b, n, m) {
+  var i = b[n]
+  b[n] = b[m]
+  b[m] = i
+}
+
+Buffer.prototype.swap16 = function swap16 () {
+  var len = this.length
+  if (len % 2 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 16-bits')
+  }
+  for (var i = 0; i < len; i += 2) {
+    swap(this, i, i + 1)
+  }
+  return this
+}
+
+Buffer.prototype.swap32 = function swap32 () {
+  var len = this.length
+  if (len % 4 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 32-bits')
+  }
+  for (var i = 0; i < len; i += 4) {
+    swap(this, i, i + 3)
+    swap(this, i + 1, i + 2)
+  }
+  return this
+}
+
+Buffer.prototype.swap64 = function swap64 () {
+  var len = this.length
+  if (len % 8 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 64-bits')
+  }
+  for (var i = 0; i < len; i += 8) {
+    swap(this, i, i + 7)
+    swap(this, i + 1, i + 6)
+    swap(this, i + 2, i + 5)
+    swap(this, i + 3, i + 4)
+  }
+  return this
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.toLocaleString = Buffer.prototype.toString
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  str = this.toString('hex', 0, max).replace(/(.{2})/g, '$1 ').trim()
+  if (this.length > max) str += ' ... '
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (isInstance(target, Uint8Array)) {
+    target = Buffer.from(target, target.offset, target.byteLength)
+  }
+  if (!Buffer.isBuffer(target)) {
+    throw new TypeError(
+      'The "target" argument must be one of type Buffer or Uint8Array. ' +
+      'Received type ' + (typeof target)
+    )
+  }
+
+  if (start === undefined) {
+    start = 0
+  }
+  if (end === undefined) {
+    end = target ? target.length : 0
+  }
+  if (thisStart === undefined) {
+    thisStart = 0
+  }
+  if (thisEnd === undefined) {
+    thisEnd = this.length
+  }
+
+  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+    throw new RangeError('out of range index')
+  }
+
+  if (thisStart >= thisEnd && start >= end) {
+    return 0
+  }
+  if (thisStart >= thisEnd) {
+    return -1
+  }
+  if (start >= end) {
+    return 1
+  }
+
+  start >>>= 0
+  end >>>= 0
+  thisStart >>>= 0
+  thisEnd >>>= 0
+
+  if (this === target) return 0
+
+  var x = thisEnd - thisStart
+  var y = end - start
+  var len = Math.min(x, y)
+
+  var thisCopy = this.slice(thisStart, thisEnd)
+  var targetCopy = target.slice(start, end)
+
+  for (var i = 0; i < len; ++i) {
+    if (thisCopy[i] !== targetCopy[i]) {
+      x = thisCopy[i]
+      y = targetCopy[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+//
+// Arguments:
+// - buffer - a Buffer to search
+// - val - a string, Buffer, or number
+// - byteOffset - an index into `buffer`; will be clamped to an int32
+// - encoding - an optional encoding, relevant is val is a string
+// - dir - true for indexOf, false for lastIndexOf
+function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+  // Empty buffer means no match
+  if (buffer.length === 0) return -1
+
+  // Normalize byteOffset
+  if (typeof byteOffset === 'string') {
+    encoding = byteOffset
+    byteOffset = 0
+  } else if (byteOffset > 0x7fffffff) {
+    byteOffset = 0x7fffffff
+  } else if (byteOffset < -0x80000000) {
+    byteOffset = -0x80000000
+  }
+  byteOffset = +byteOffset // Coerce to Number.
+  if (numberIsNaN(byteOffset)) {
+    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+    byteOffset = dir ? 0 : (buffer.length - 1)
+  }
+
+  // Normalize byteOffset: negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+  if (byteOffset >= buffer.length) {
+    if (dir) return -1
+    else byteOffset = buffer.length - 1
+  } else if (byteOffset < 0) {
+    if (dir) byteOffset = 0
+    else return -1
+  }
+
+  // Normalize val
+  if (typeof val === 'string') {
+    val = Buffer.from(val, encoding)
+  }
+
+  // Finally, search either indexOf (if dir is true) or lastIndexOf
+  if (Buffer.isBuffer(val)) {
+    // Special case: looking for empty string/buffer always fails
+    if (val.length === 0) {
+      return -1
+    }
+    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+  } else if (typeof val === 'number') {
+    val = val & 0xFF // Search for a byte value [0-255]
+    if (typeof Uint8Array.prototype.indexOf === 'function') {
+      if (dir) {
+        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+      } else {
+        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+      }
+    }
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+  var indexSize = 1
+  var arrLength = arr.length
+  var valLength = val.length
+
+  if (encoding !== undefined) {
+    encoding = String(encoding).toLowerCase()
+    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+        encoding === 'utf16le' || encoding === 'utf-16le') {
+      if (arr.length < 2 || val.length < 2) {
+        return -1
+      }
+      indexSize = 2
+      arrLength /= 2
+      valLength /= 2
+      byteOffset /= 2
+    }
+  }
+
+  function read (buf, i) {
+    if (indexSize === 1) {
+      return buf[i]
+    } else {
+      return buf.readUInt16BE(i * indexSize)
+    }
+  }
+
+  var i
+  if (dir) {
+    var foundIndex = -1
+    for (i = byteOffset; i < arrLength; i++) {
+      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+      } else {
+        if (foundIndex !== -1) i -= i - foundIndex
+        foundIndex = -1
+      }
+    }
+  } else {
+    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+    for (i = byteOffset; i >= 0; i--) {
+      var found = true
+      for (var j = 0; j < valLength; j++) {
+        if (read(arr, i + j) !== read(val, j)) {
+          found = false
+          break
+        }
+      }
+      if (found) return i
+    }
+  }
+
+  return -1
+}
+
+Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+  return this.indexOf(val, byteOffset, encoding) !== -1
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+}
+
+Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  var strLen = string.length
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; ++i) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (numberIsNaN(parsed)) return i
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset >>> 0
+    if (isFinite(length)) {
+      length = length >>> 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  } else {
+    throw new Error(
+      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+    )
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('Attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Write(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+        : (firstByte > 0xBF) ? 2
+          : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function latin1Slice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; ++i) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf = this.subarray(start, end)
+  // Return an augmented `Uint8Array` instance
+  newBuf.__proto__ = Buffer.prototype
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  offset = offset >>> 0
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  this[offset + 3] = (value >>> 24)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 1] = (value >>> 8)
+  this[offset] = (value & 0xff)
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) {
+    var limit = Math.pow(2, (8 * byteLength) - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) {
+    var limit = Math.pow(2, (8 * byteLength) - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 3] = (value >>> 24)
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+  if (offset < 0) throw new RangeError('Index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!Buffer.isBuffer(target)) throw new TypeError('argument should be a Buffer')
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('Index out of range')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+
+  if (this === target && typeof Uint8Array.prototype.copyWithin === 'function') {
+    // Use built-in when available, missing from IE11
+    this.copyWithin(targetStart, start, end)
+  } else if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (var i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, end),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// Usage:
+//    buffer.fill(number[, offset[, end]])
+//    buffer.fill(buffer[, offset[, end]])
+//    buffer.fill(string[, offset[, end]][, encoding])
+Buffer.prototype.fill = function fill (val, start, end, encoding) {
+  // Handle string cases:
+  if (typeof val === 'string') {
+    if (typeof start === 'string') {
+      encoding = start
+      start = 0
+      end = this.length
+    } else if (typeof end === 'string') {
+      encoding = end
+      end = this.length
+    }
+    if (encoding !== undefined && typeof encoding !== 'string') {
+      throw new TypeError('encoding must be a string')
+    }
+    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+      throw new TypeError('Unknown encoding: ' + encoding)
+    }
+    if (val.length === 1) {
+      var code = val.charCodeAt(0)
+      if ((encoding === 'utf8' && code < 128) ||
+          encoding === 'latin1') {
+        // Fast path: If `val` fits into a single byte, use that numeric value.
+        val = code
+      }
+    }
+  } else if (typeof val === 'number') {
+    val = val & 255
+  }
+
+  // Invalid ranges are not set to a default, so can range check early.
+  if (start < 0 || this.length < start || this.length < end) {
+    throw new RangeError('Out of range index')
+  }
+
+  if (end <= start) {
+    return this
+  }
+
+  start = start >>> 0
+  end = end === undefined ? this.length : end >>> 0
+
+  if (!val) val = 0
+
+  var i
+  if (typeof val === 'number') {
+    for (i = start; i < end; ++i) {
+      this[i] = val
+    }
+  } else {
+    var bytes = Buffer.isBuffer(val)
+      ? val
+      : Buffer.from(val, encoding)
+    var len = bytes.length
+    if (len === 0) {
+      throw new TypeError('The value "' + val +
+        '" is invalid for argument "value"')
+    }
+    for (i = 0; i < end - start; ++i) {
+      this[i + start] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node takes equal signs as end of the Base64 encoding
+  str = str.split('=')[0]
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = str.trim().replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; ++i) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; ++i) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+// ArrayBuffer or Uint8Array objects from other contexts (i.e. iframes) do not pass
+// the `instanceof` check but they should be treated as of that type.
+// See: https://github.com/feross/buffer/issues/166
+function isInstance (obj, type) {
+  return obj instanceof type ||
+    (obj != null && obj.constructor != null && obj.constructor.name != null &&
+      obj.constructor.name === type.name)
+}
+function numberIsNaN (obj) {
+  // For IE11 support
+  return obj !== obj // eslint-disable-line no-self-compare
+}
+
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"base64-js":87,"buffer":91,"ieee754":103}],92:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -6501,7 +9837,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 	return intrinsic;
 };
 
-},{"./":71,"get-intrinsic":76}],71:[function(require,module,exports){
+},{"./":93,"get-intrinsic":99}],93:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
@@ -6550,7 +9886,7 @@ if ($defineProperty) {
 	module.exports.apply = applyBind;
 }
 
-},{"function-bind":75,"get-intrinsic":76}],72:[function(require,module,exports){
+},{"function-bind":98,"get-intrinsic":99}],94:[function(require,module,exports){
 'use strict';
 const mapObj = require('map-obj');
 const camelCase = require('camelcase');
@@ -6629,7 +9965,7 @@ module.exports = (input, options) => {
 	return camelCaseConvert(input, options);
 };
 
-},{"camelcase":73,"map-obj":80,"quick-lru":92}],73:[function(require,module,exports){
+},{"camelcase":95,"map-obj":106,"quick-lru":119}],95:[function(require,module,exports){
 'use strict';
 
 const preserveCamelCase = string => {
@@ -6707,7 +10043,19 @@ module.exports = camelCase;
 // TODO: Remove this for the next major release
 module.exports.default = camelCase;
 
-},{}],74:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.dotCase = void 0;
+var tslib_1 = require("tslib");
+var no_case_1 = require("no-case");
+function dotCase(input, options) {
+    if (options === void 0) { options = {}; }
+    return no_case_1.noCase(input, tslib_1.__assign({ delimiter: "." }, options));
+}
+exports.dotCase = dotCase;
+
+},{"no-case":111,"tslib":125}],97:[function(require,module,exports){
 'use strict';
 
 /* eslint no-invalid-this: 1 */
@@ -6761,14 +10109,14 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],75:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":74}],76:[function(require,module,exports){
+},{"./implementation":97}],99:[function(require,module,exports){
 'use strict';
 
 var undefined;
@@ -7100,7 +10448,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 	return value;
 };
 
-},{"function-bind":75,"has":79,"has-symbols":77}],77:[function(require,module,exports){
+},{"function-bind":98,"has":102,"has-symbols":100}],100:[function(require,module,exports){
 'use strict';
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
@@ -7115,7 +10463,7 @@ module.exports = function hasNativeSymbols() {
 	return hasSymbolSham();
 };
 
-},{"./shams":78}],78:[function(require,module,exports){
+},{"./shams":101}],101:[function(require,module,exports){
 'use strict';
 
 /* eslint complexity: [2, 18], max-statements: [2, 33] */
@@ -7159,14 +10507,677 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{}],79:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 'use strict';
 
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":75}],80:[function(require,module,exports){
+},{"function-bind":98}],103:[function(require,module,exports){
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],104:[function(require,module,exports){
+(function (process,global){(function (){
+/**
+ * [js-sha256]{@link https://github.com/emn178/js-sha256}
+ *
+ * @version 0.9.0
+ * @author Chen, Yi-Cyuan [emn178@gmail.com]
+ * @copyright Chen, Yi-Cyuan 2014-2017
+ * @license MIT
+ */
+/*jslint bitwise: true */
+(function () {
+  'use strict';
+
+  var ERROR = 'input is invalid type';
+  var WINDOW = typeof window === 'object';
+  var root = WINDOW ? window : {};
+  if (root.JS_SHA256_NO_WINDOW) {
+    WINDOW = false;
+  }
+  var WEB_WORKER = !WINDOW && typeof self === 'object';
+  var NODE_JS = !root.JS_SHA256_NO_NODE_JS && typeof process === 'object' && process.versions && process.versions.node;
+  if (NODE_JS) {
+    root = global;
+  } else if (WEB_WORKER) {
+    root = self;
+  }
+  var COMMON_JS = !root.JS_SHA256_NO_COMMON_JS && typeof module === 'object' && module.exports;
+  var AMD = typeof define === 'function' && define.amd;
+  var ARRAY_BUFFER = !root.JS_SHA256_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
+  var HEX_CHARS = '0123456789abcdef'.split('');
+  var EXTRA = [-2147483648, 8388608, 32768, 128];
+  var SHIFT = [24, 16, 8, 0];
+  var K = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  ];
+  var OUTPUT_TYPES = ['hex', 'array', 'digest', 'arrayBuffer'];
+
+  var blocks = [];
+
+  if (root.JS_SHA256_NO_NODE_JS || !Array.isArray) {
+    Array.isArray = function (obj) {
+      return Object.prototype.toString.call(obj) === '[object Array]';
+    };
+  }
+
+  if (ARRAY_BUFFER && (root.JS_SHA256_NO_ARRAY_BUFFER_IS_VIEW || !ArrayBuffer.isView)) {
+    ArrayBuffer.isView = function (obj) {
+      return typeof obj === 'object' && obj.buffer && obj.buffer.constructor === ArrayBuffer;
+    };
+  }
+
+  var createOutputMethod = function (outputType, is224) {
+    return function (message) {
+      return new Sha256(is224, true).update(message)[outputType]();
+    };
+  };
+
+  var createMethod = function (is224) {
+    var method = createOutputMethod('hex', is224);
+    if (NODE_JS) {
+      method = nodeWrap(method, is224);
+    }
+    method.create = function () {
+      return new Sha256(is224);
+    };
+    method.update = function (message) {
+      return method.create().update(message);
+    };
+    for (var i = 0; i < OUTPUT_TYPES.length; ++i) {
+      var type = OUTPUT_TYPES[i];
+      method[type] = createOutputMethod(type, is224);
+    }
+    return method;
+  };
+
+  var nodeWrap = function (method, is224) {
+    var crypto = eval("require('crypto')");
+    var Buffer = eval("require('buffer').Buffer");
+    var algorithm = is224 ? 'sha224' : 'sha256';
+    var nodeMethod = function (message) {
+      if (typeof message === 'string') {
+        return crypto.createHash(algorithm).update(message, 'utf8').digest('hex');
+      } else {
+        if (message === null || message === undefined) {
+          throw new Error(ERROR);
+        } else if (message.constructor === ArrayBuffer) {
+          message = new Uint8Array(message);
+        }
+      }
+      if (Array.isArray(message) || ArrayBuffer.isView(message) ||
+        message.constructor === Buffer) {
+        return crypto.createHash(algorithm).update(new Buffer(message)).digest('hex');
+      } else {
+        return method(message);
+      }
+    };
+    return nodeMethod;
+  };
+
+  var createHmacOutputMethod = function (outputType, is224) {
+    return function (key, message) {
+      return new HmacSha256(key, is224, true).update(message)[outputType]();
+    };
+  };
+
+  var createHmacMethod = function (is224) {
+    var method = createHmacOutputMethod('hex', is224);
+    method.create = function (key) {
+      return new HmacSha256(key, is224);
+    };
+    method.update = function (key, message) {
+      return method.create(key).update(message);
+    };
+    for (var i = 0; i < OUTPUT_TYPES.length; ++i) {
+      var type = OUTPUT_TYPES[i];
+      method[type] = createHmacOutputMethod(type, is224);
+    }
+    return method;
+  };
+
+  function Sha256(is224, sharedMemory) {
+    if (sharedMemory) {
+      blocks[0] = blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+        blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+        blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+        blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+      this.blocks = blocks;
+    } else {
+      this.blocks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    }
+
+    if (is224) {
+      this.h0 = 0xc1059ed8;
+      this.h1 = 0x367cd507;
+      this.h2 = 0x3070dd17;
+      this.h3 = 0xf70e5939;
+      this.h4 = 0xffc00b31;
+      this.h5 = 0x68581511;
+      this.h6 = 0x64f98fa7;
+      this.h7 = 0xbefa4fa4;
+    } else { // 256
+      this.h0 = 0x6a09e667;
+      this.h1 = 0xbb67ae85;
+      this.h2 = 0x3c6ef372;
+      this.h3 = 0xa54ff53a;
+      this.h4 = 0x510e527f;
+      this.h5 = 0x9b05688c;
+      this.h6 = 0x1f83d9ab;
+      this.h7 = 0x5be0cd19;
+    }
+
+    this.block = this.start = this.bytes = this.hBytes = 0;
+    this.finalized = this.hashed = false;
+    this.first = true;
+    this.is224 = is224;
+  }
+
+  Sha256.prototype.update = function (message) {
+    if (this.finalized) {
+      return;
+    }
+    var notString, type = typeof message;
+    if (type !== 'string') {
+      if (type === 'object') {
+        if (message === null) {
+          throw new Error(ERROR);
+        } else if (ARRAY_BUFFER && message.constructor === ArrayBuffer) {
+          message = new Uint8Array(message);
+        } else if (!Array.isArray(message)) {
+          if (!ARRAY_BUFFER || !ArrayBuffer.isView(message)) {
+            throw new Error(ERROR);
+          }
+        }
+      } else {
+        throw new Error(ERROR);
+      }
+      notString = true;
+    }
+    var code, index = 0, i, length = message.length, blocks = this.blocks;
+
+    while (index < length) {
+      if (this.hashed) {
+        this.hashed = false;
+        blocks[0] = this.block;
+        blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+          blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+          blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+          blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+      }
+
+      if (notString) {
+        for (i = this.start; index < length && i < 64; ++index) {
+          blocks[i >> 2] |= message[index] << SHIFT[i++ & 3];
+        }
+      } else {
+        for (i = this.start; index < length && i < 64; ++index) {
+          code = message.charCodeAt(index);
+          if (code < 0x80) {
+            blocks[i >> 2] |= code << SHIFT[i++ & 3];
+          } else if (code < 0x800) {
+            blocks[i >> 2] |= (0xc0 | (code >> 6)) << SHIFT[i++ & 3];
+            blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i++ & 3];
+          } else if (code < 0xd800 || code >= 0xe000) {
+            blocks[i >> 2] |= (0xe0 | (code >> 12)) << SHIFT[i++ & 3];
+            blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i++ & 3];
+            blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i++ & 3];
+          } else {
+            code = 0x10000 + (((code & 0x3ff) << 10) | (message.charCodeAt(++index) & 0x3ff));
+            blocks[i >> 2] |= (0xf0 | (code >> 18)) << SHIFT[i++ & 3];
+            blocks[i >> 2] |= (0x80 | ((code >> 12) & 0x3f)) << SHIFT[i++ & 3];
+            blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i++ & 3];
+            blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i++ & 3];
+          }
+        }
+      }
+
+      this.lastByteIndex = i;
+      this.bytes += i - this.start;
+      if (i >= 64) {
+        this.block = blocks[16];
+        this.start = i - 64;
+        this.hash();
+        this.hashed = true;
+      } else {
+        this.start = i;
+      }
+    }
+    if (this.bytes > 4294967295) {
+      this.hBytes += this.bytes / 4294967296 << 0;
+      this.bytes = this.bytes % 4294967296;
+    }
+    return this;
+  };
+
+  Sha256.prototype.finalize = function () {
+    if (this.finalized) {
+      return;
+    }
+    this.finalized = true;
+    var blocks = this.blocks, i = this.lastByteIndex;
+    blocks[16] = this.block;
+    blocks[i >> 2] |= EXTRA[i & 3];
+    this.block = blocks[16];
+    if (i >= 56) {
+      if (!this.hashed) {
+        this.hash();
+      }
+      blocks[0] = this.block;
+      blocks[16] = blocks[1] = blocks[2] = blocks[3] =
+        blocks[4] = blocks[5] = blocks[6] = blocks[7] =
+        blocks[8] = blocks[9] = blocks[10] = blocks[11] =
+        blocks[12] = blocks[13] = blocks[14] = blocks[15] = 0;
+    }
+    blocks[14] = this.hBytes << 3 | this.bytes >>> 29;
+    blocks[15] = this.bytes << 3;
+    this.hash();
+  };
+
+  Sha256.prototype.hash = function () {
+    var a = this.h0, b = this.h1, c = this.h2, d = this.h3, e = this.h4, f = this.h5, g = this.h6,
+      h = this.h7, blocks = this.blocks, j, s0, s1, maj, t1, t2, ch, ab, da, cd, bc;
+
+    for (j = 16; j < 64; ++j) {
+      // rightrotate
+      t1 = blocks[j - 15];
+      s0 = ((t1 >>> 7) | (t1 << 25)) ^ ((t1 >>> 18) | (t1 << 14)) ^ (t1 >>> 3);
+      t1 = blocks[j - 2];
+      s1 = ((t1 >>> 17) | (t1 << 15)) ^ ((t1 >>> 19) | (t1 << 13)) ^ (t1 >>> 10);
+      blocks[j] = blocks[j - 16] + s0 + blocks[j - 7] + s1 << 0;
+    }
+
+    bc = b & c;
+    for (j = 0; j < 64; j += 4) {
+      if (this.first) {
+        if (this.is224) {
+          ab = 300032;
+          t1 = blocks[0] - 1413257819;
+          h = t1 - 150054599 << 0;
+          d = t1 + 24177077 << 0;
+        } else {
+          ab = 704751109;
+          t1 = blocks[0] - 210244248;
+          h = t1 - 1521486534 << 0;
+          d = t1 + 143694565 << 0;
+        }
+        this.first = false;
+      } else {
+        s0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+        s1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+        ab = a & b;
+        maj = ab ^ (a & c) ^ bc;
+        ch = (e & f) ^ (~e & g);
+        t1 = h + s1 + ch + K[j] + blocks[j];
+        t2 = s0 + maj;
+        h = d + t1 << 0;
+        d = t1 + t2 << 0;
+      }
+      s0 = ((d >>> 2) | (d << 30)) ^ ((d >>> 13) | (d << 19)) ^ ((d >>> 22) | (d << 10));
+      s1 = ((h >>> 6) | (h << 26)) ^ ((h >>> 11) | (h << 21)) ^ ((h >>> 25) | (h << 7));
+      da = d & a;
+      maj = da ^ (d & b) ^ ab;
+      ch = (h & e) ^ (~h & f);
+      t1 = g + s1 + ch + K[j + 1] + blocks[j + 1];
+      t2 = s0 + maj;
+      g = c + t1 << 0;
+      c = t1 + t2 << 0;
+      s0 = ((c >>> 2) | (c << 30)) ^ ((c >>> 13) | (c << 19)) ^ ((c >>> 22) | (c << 10));
+      s1 = ((g >>> 6) | (g << 26)) ^ ((g >>> 11) | (g << 21)) ^ ((g >>> 25) | (g << 7));
+      cd = c & d;
+      maj = cd ^ (c & a) ^ da;
+      ch = (g & h) ^ (~g & e);
+      t1 = f + s1 + ch + K[j + 2] + blocks[j + 2];
+      t2 = s0 + maj;
+      f = b + t1 << 0;
+      b = t1 + t2 << 0;
+      s0 = ((b >>> 2) | (b << 30)) ^ ((b >>> 13) | (b << 19)) ^ ((b >>> 22) | (b << 10));
+      s1 = ((f >>> 6) | (f << 26)) ^ ((f >>> 11) | (f << 21)) ^ ((f >>> 25) | (f << 7));
+      bc = b & c;
+      maj = bc ^ (b & d) ^ cd;
+      ch = (f & g) ^ (~f & h);
+      t1 = e + s1 + ch + K[j + 3] + blocks[j + 3];
+      t2 = s0 + maj;
+      e = a + t1 << 0;
+      a = t1 + t2 << 0;
+    }
+
+    this.h0 = this.h0 + a << 0;
+    this.h1 = this.h1 + b << 0;
+    this.h2 = this.h2 + c << 0;
+    this.h3 = this.h3 + d << 0;
+    this.h4 = this.h4 + e << 0;
+    this.h5 = this.h5 + f << 0;
+    this.h6 = this.h6 + g << 0;
+    this.h7 = this.h7 + h << 0;
+  };
+
+  Sha256.prototype.hex = function () {
+    this.finalize();
+
+    var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5,
+      h6 = this.h6, h7 = this.h7;
+
+    var hex = HEX_CHARS[(h0 >> 28) & 0x0F] + HEX_CHARS[(h0 >> 24) & 0x0F] +
+      HEX_CHARS[(h0 >> 20) & 0x0F] + HEX_CHARS[(h0 >> 16) & 0x0F] +
+      HEX_CHARS[(h0 >> 12) & 0x0F] + HEX_CHARS[(h0 >> 8) & 0x0F] +
+      HEX_CHARS[(h0 >> 4) & 0x0F] + HEX_CHARS[h0 & 0x0F] +
+      HEX_CHARS[(h1 >> 28) & 0x0F] + HEX_CHARS[(h1 >> 24) & 0x0F] +
+      HEX_CHARS[(h1 >> 20) & 0x0F] + HEX_CHARS[(h1 >> 16) & 0x0F] +
+      HEX_CHARS[(h1 >> 12) & 0x0F] + HEX_CHARS[(h1 >> 8) & 0x0F] +
+      HEX_CHARS[(h1 >> 4) & 0x0F] + HEX_CHARS[h1 & 0x0F] +
+      HEX_CHARS[(h2 >> 28) & 0x0F] + HEX_CHARS[(h2 >> 24) & 0x0F] +
+      HEX_CHARS[(h2 >> 20) & 0x0F] + HEX_CHARS[(h2 >> 16) & 0x0F] +
+      HEX_CHARS[(h2 >> 12) & 0x0F] + HEX_CHARS[(h2 >> 8) & 0x0F] +
+      HEX_CHARS[(h2 >> 4) & 0x0F] + HEX_CHARS[h2 & 0x0F] +
+      HEX_CHARS[(h3 >> 28) & 0x0F] + HEX_CHARS[(h3 >> 24) & 0x0F] +
+      HEX_CHARS[(h3 >> 20) & 0x0F] + HEX_CHARS[(h3 >> 16) & 0x0F] +
+      HEX_CHARS[(h3 >> 12) & 0x0F] + HEX_CHARS[(h3 >> 8) & 0x0F] +
+      HEX_CHARS[(h3 >> 4) & 0x0F] + HEX_CHARS[h3 & 0x0F] +
+      HEX_CHARS[(h4 >> 28) & 0x0F] + HEX_CHARS[(h4 >> 24) & 0x0F] +
+      HEX_CHARS[(h4 >> 20) & 0x0F] + HEX_CHARS[(h4 >> 16) & 0x0F] +
+      HEX_CHARS[(h4 >> 12) & 0x0F] + HEX_CHARS[(h4 >> 8) & 0x0F] +
+      HEX_CHARS[(h4 >> 4) & 0x0F] + HEX_CHARS[h4 & 0x0F] +
+      HEX_CHARS[(h5 >> 28) & 0x0F] + HEX_CHARS[(h5 >> 24) & 0x0F] +
+      HEX_CHARS[(h5 >> 20) & 0x0F] + HEX_CHARS[(h5 >> 16) & 0x0F] +
+      HEX_CHARS[(h5 >> 12) & 0x0F] + HEX_CHARS[(h5 >> 8) & 0x0F] +
+      HEX_CHARS[(h5 >> 4) & 0x0F] + HEX_CHARS[h5 & 0x0F] +
+      HEX_CHARS[(h6 >> 28) & 0x0F] + HEX_CHARS[(h6 >> 24) & 0x0F] +
+      HEX_CHARS[(h6 >> 20) & 0x0F] + HEX_CHARS[(h6 >> 16) & 0x0F] +
+      HEX_CHARS[(h6 >> 12) & 0x0F] + HEX_CHARS[(h6 >> 8) & 0x0F] +
+      HEX_CHARS[(h6 >> 4) & 0x0F] + HEX_CHARS[h6 & 0x0F];
+    if (!this.is224) {
+      hex += HEX_CHARS[(h7 >> 28) & 0x0F] + HEX_CHARS[(h7 >> 24) & 0x0F] +
+        HEX_CHARS[(h7 >> 20) & 0x0F] + HEX_CHARS[(h7 >> 16) & 0x0F] +
+        HEX_CHARS[(h7 >> 12) & 0x0F] + HEX_CHARS[(h7 >> 8) & 0x0F] +
+        HEX_CHARS[(h7 >> 4) & 0x0F] + HEX_CHARS[h7 & 0x0F];
+    }
+    return hex;
+  };
+
+  Sha256.prototype.toString = Sha256.prototype.hex;
+
+  Sha256.prototype.digest = function () {
+    this.finalize();
+
+    var h0 = this.h0, h1 = this.h1, h2 = this.h2, h3 = this.h3, h4 = this.h4, h5 = this.h5,
+      h6 = this.h6, h7 = this.h7;
+
+    var arr = [
+      (h0 >> 24) & 0xFF, (h0 >> 16) & 0xFF, (h0 >> 8) & 0xFF, h0 & 0xFF,
+      (h1 >> 24) & 0xFF, (h1 >> 16) & 0xFF, (h1 >> 8) & 0xFF, h1 & 0xFF,
+      (h2 >> 24) & 0xFF, (h2 >> 16) & 0xFF, (h2 >> 8) & 0xFF, h2 & 0xFF,
+      (h3 >> 24) & 0xFF, (h3 >> 16) & 0xFF, (h3 >> 8) & 0xFF, h3 & 0xFF,
+      (h4 >> 24) & 0xFF, (h4 >> 16) & 0xFF, (h4 >> 8) & 0xFF, h4 & 0xFF,
+      (h5 >> 24) & 0xFF, (h5 >> 16) & 0xFF, (h5 >> 8) & 0xFF, h5 & 0xFF,
+      (h6 >> 24) & 0xFF, (h6 >> 16) & 0xFF, (h6 >> 8) & 0xFF, h6 & 0xFF
+    ];
+    if (!this.is224) {
+      arr.push((h7 >> 24) & 0xFF, (h7 >> 16) & 0xFF, (h7 >> 8) & 0xFF, h7 & 0xFF);
+    }
+    return arr;
+  };
+
+  Sha256.prototype.array = Sha256.prototype.digest;
+
+  Sha256.prototype.arrayBuffer = function () {
+    this.finalize();
+
+    var buffer = new ArrayBuffer(this.is224 ? 28 : 32);
+    var dataView = new DataView(buffer);
+    dataView.setUint32(0, this.h0);
+    dataView.setUint32(4, this.h1);
+    dataView.setUint32(8, this.h2);
+    dataView.setUint32(12, this.h3);
+    dataView.setUint32(16, this.h4);
+    dataView.setUint32(20, this.h5);
+    dataView.setUint32(24, this.h6);
+    if (!this.is224) {
+      dataView.setUint32(28, this.h7);
+    }
+    return buffer;
+  };
+
+  function HmacSha256(key, is224, sharedMemory) {
+    var i, type = typeof key;
+    if (type === 'string') {
+      var bytes = [], length = key.length, index = 0, code;
+      for (i = 0; i < length; ++i) {
+        code = key.charCodeAt(i);
+        if (code < 0x80) {
+          bytes[index++] = code;
+        } else if (code < 0x800) {
+          bytes[index++] = (0xc0 | (code >> 6));
+          bytes[index++] = (0x80 | (code & 0x3f));
+        } else if (code < 0xd800 || code >= 0xe000) {
+          bytes[index++] = (0xe0 | (code >> 12));
+          bytes[index++] = (0x80 | ((code >> 6) & 0x3f));
+          bytes[index++] = (0x80 | (code & 0x3f));
+        } else {
+          code = 0x10000 + (((code & 0x3ff) << 10) | (key.charCodeAt(++i) & 0x3ff));
+          bytes[index++] = (0xf0 | (code >> 18));
+          bytes[index++] = (0x80 | ((code >> 12) & 0x3f));
+          bytes[index++] = (0x80 | ((code >> 6) & 0x3f));
+          bytes[index++] = (0x80 | (code & 0x3f));
+        }
+      }
+      key = bytes;
+    } else {
+      if (type === 'object') {
+        if (key === null) {
+          throw new Error(ERROR);
+        } else if (ARRAY_BUFFER && key.constructor === ArrayBuffer) {
+          key = new Uint8Array(key);
+        } else if (!Array.isArray(key)) {
+          if (!ARRAY_BUFFER || !ArrayBuffer.isView(key)) {
+            throw new Error(ERROR);
+          }
+        }
+      } else {
+        throw new Error(ERROR);
+      }
+    }
+
+    if (key.length > 64) {
+      key = (new Sha256(is224, true)).update(key).array();
+    }
+
+    var oKeyPad = [], iKeyPad = [];
+    for (i = 0; i < 64; ++i) {
+      var b = key[i] || 0;
+      oKeyPad[i] = 0x5c ^ b;
+      iKeyPad[i] = 0x36 ^ b;
+    }
+
+    Sha256.call(this, is224, sharedMemory);
+
+    this.update(iKeyPad);
+    this.oKeyPad = oKeyPad;
+    this.inner = true;
+    this.sharedMemory = sharedMemory;
+  }
+  HmacSha256.prototype = new Sha256();
+
+  HmacSha256.prototype.finalize = function () {
+    Sha256.prototype.finalize.call(this);
+    if (this.inner) {
+      this.inner = false;
+      var innerHash = this.array();
+      Sha256.call(this, this.is224, this.sharedMemory);
+      this.update(this.oKeyPad);
+      this.update(innerHash);
+      Sha256.prototype.finalize.call(this);
+    }
+  };
+
+  var exports = createMethod();
+  exports.sha256 = exports;
+  exports.sha224 = createMethod(true);
+  exports.sha256.hmac = createHmacMethod();
+  exports.sha224.hmac = createHmacMethod(true);
+
+  if (COMMON_JS) {
+    module.exports = exports;
+  } else {
+    root.sha256 = exports.sha256;
+    root.sha224 = exports.sha224;
+    if (AMD) {
+      define(function () {
+        return exports;
+      });
+    }
+  }
+})();
+
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"_process":113}],105:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.lowerCase = exports.localeLowerCase = void 0;
+/**
+ * Source: ftp://ftp.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt
+ */
+var SUPPORTED_LOCALE = {
+    tr: {
+        regexp: /\u0130|\u0049|\u0049\u0307/g,
+        map: {
+            İ: "\u0069",
+            I: "\u0131",
+            İ: "\u0069",
+        },
+    },
+    az: {
+        regexp: /\u0130/g,
+        map: {
+            İ: "\u0069",
+            I: "\u0131",
+            İ: "\u0069",
+        },
+    },
+    lt: {
+        regexp: /\u0049|\u004A|\u012E|\u00CC|\u00CD|\u0128/g,
+        map: {
+            I: "\u0069\u0307",
+            J: "\u006A\u0307",
+            Į: "\u012F\u0307",
+            Ì: "\u0069\u0307\u0300",
+            Í: "\u0069\u0307\u0301",
+            Ĩ: "\u0069\u0307\u0303",
+        },
+    },
+};
+/**
+ * Localized lower case.
+ */
+function localeLowerCase(str, locale) {
+    var lang = SUPPORTED_LOCALE[locale.toLowerCase()];
+    if (lang)
+        return lowerCase(str.replace(lang.regexp, function (m) { return lang.map[m]; }));
+    return lowerCase(str);
+}
+exports.localeLowerCase = localeLowerCase;
+/**
+ * Lower case as a function.
+ */
+function lowerCase(str) {
+    return str.toLowerCase();
+}
+exports.lowerCase = lowerCase;
+
+},{}],106:[function(require,module,exports){
 'use strict';
 
 const isObject = value => typeof value === 'object' && value !== null;
@@ -7227,7 +11238,7 @@ module.exports = (object, mapper, options) => {
 	return mapObject(object, mapper, options);
 };
 
-},{}],81:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 module.exports={
 	"version": "2021a",
 	"zones": [
@@ -8077,11 +12088,11 @@ module.exports={
 		"ZW|Africa/Maputo Africa/Harare"
 	]
 }
-},{}],82:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 var moment = module.exports = require("./moment-timezone");
 moment.tz.load(require('./data/packed/latest.json'));
 
-},{"./data/packed/latest.json":81,"./moment-timezone":83}],83:[function(require,module,exports){
+},{"./data/packed/latest.json":107,"./moment-timezone":109}],109:[function(require,module,exports){
 //! moment-timezone.js
 //! version : 0.5.33
 //! Copyright (c) JS Foundation and other contributors
@@ -8779,7 +12790,7 @@ moment.tz.load(require('./data/packed/latest.json'));
 	return moment;
 }));
 
-},{"moment":84}],84:[function(require,module,exports){
+},{"moment":110}],110:[function(require,module,exports){
 //! moment.js
 //! version : 2.29.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -14451,7 +18462,43 @@ moment.tz.load(require('./data/packed/latest.json'));
 
 })));
 
-},{}],85:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.noCase = void 0;
+var lower_case_1 = require("lower-case");
+// Support camel case ("camelCase" -> "camel Case" and "CAMELCase" -> "CAMEL Case").
+var DEFAULT_SPLIT_REGEXP = [/([a-z0-9])([A-Z])/g, /([A-Z])([A-Z][a-z])/g];
+// Remove all non-word characters.
+var DEFAULT_STRIP_REGEXP = /[^A-Z0-9]+/gi;
+/**
+ * Normalize the string into something other libraries can manipulate easier.
+ */
+function noCase(input, options) {
+    if (options === void 0) { options = {}; }
+    var _a = options.splitRegexp, splitRegexp = _a === void 0 ? DEFAULT_SPLIT_REGEXP : _a, _b = options.stripRegexp, stripRegexp = _b === void 0 ? DEFAULT_STRIP_REGEXP : _b, _c = options.transform, transform = _c === void 0 ? lower_case_1.lowerCase : _c, _d = options.delimiter, delimiter = _d === void 0 ? " " : _d;
+    var result = replace(replace(input, splitRegexp, "$1\0$2"), stripRegexp, "\0");
+    var start = 0;
+    var end = result.length;
+    // Trim the delimiter from around the output string.
+    while (result.charAt(start) === "\0")
+        start++;
+    while (result.charAt(end - 1) === "\0")
+        end--;
+    // Transform each token independently.
+    return result.slice(start, end).split("\0").map(transform).join(delimiter);
+}
+exports.noCase = noCase;
+/**
+ * Replace `re` in the input string with the replacement value.
+ */
+function replace(input, re, value) {
+    if (re instanceof RegExp)
+        return input.replace(re, value);
+    return re.reduce(function (input, re) { return input.replace(re, value); }, input);
+}
+
+},{"lower-case":105}],112:[function(require,module,exports){
 var hasMap = typeof Map === 'function' && Map.prototype;
 var mapSizeDescriptor = Object.getOwnPropertyDescriptor && hasMap ? Object.getOwnPropertyDescriptor(Map.prototype, 'size') : null;
 var mapSize = hasMap && mapSizeDescriptor && typeof mapSizeDescriptor.get === 'function' ? mapSizeDescriptor.get : null;
@@ -14906,7 +18953,7 @@ function arrObjKeys(obj, inspect) {
     return xs;
 }
 
-},{"./util.inspect":69}],86:[function(require,module,exports){
+},{"./util.inspect":89}],113:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -15092,7 +19139,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],87:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -15117,7 +19164,7 @@ module.exports = {
     RFC3986: Format.RFC3986
 };
 
-},{}],88:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -15130,7 +19177,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":87,"./parse":89,"./stringify":90}],89:[function(require,module,exports){
+},{"./formats":114,"./parse":116,"./stringify":117}],116:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -15395,7 +19442,7 @@ module.exports = function (str, opts) {
     return utils.compact(obj);
 };
 
-},{"./utils":91}],90:[function(require,module,exports){
+},{"./utils":118}],117:[function(require,module,exports){
 'use strict';
 
 var getSideChannel = require('side-channel');
@@ -15687,7 +19734,7 @@ module.exports = function (object, opts) {
     return joined.length > 0 ? prefix + joined : '';
 };
 
-},{"./formats":87,"./utils":91,"side-channel":94}],91:[function(require,module,exports){
+},{"./formats":114,"./utils":118,"side-channel":122}],118:[function(require,module,exports){
 'use strict';
 
 var formats = require('./formats');
@@ -15940,7 +19987,7 @@ module.exports = {
     merge: merge
 };
 
-},{"./formats":87}],92:[function(require,module,exports){
+},{"./formats":114}],119:[function(require,module,exports){
 'use strict';
 
 class QuickLRU {
@@ -16057,11 +20104,78 @@ class QuickLRU {
 
 module.exports = QuickLRU;
 
-},{}],93:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 var e,t=(e=require("axios"))&&"object"==typeof e&&"default"in e?e.default:e;function r(e){return e}function n(e){var t=[];if(e)return Array.isArray(e)?e:("object"==typeof e&&Object.keys(e).forEach(function(r){"number"==typeof r&&(t[r]=e[r])}),t)}function o(e){if(t.isCancel(e))return Promise.reject(e);var r=i(e)||{};if(r.currentRetryAttempt=r.currentRetryAttempt||0,r.retry="number"==typeof r.retry?r.retry:3,r.retryDelay="number"==typeof r.retryDelay?r.retryDelay:100,r.instance=r.instance||t,r.backoffType=r.backoffType||"exponential",r.httpMethodsToRetry=n(r.httpMethodsToRetry)||["GET","HEAD","PUT","OPTIONS","DELETE"],r.noResponseRetries="number"==typeof r.noResponseRetries?r.noResponseRetries:2,r.statusCodesToRetry=n(r.statusCodesToRetry)||[[100,199],[429,429],[500,599]],e.config=e.config||{},e.config.raxConfig=Object.assign({},r),!(r.shouldRetry||s)(e))return Promise.reject(e);var o=new Promise(function(t){var n;n="linear"===r.backoffType?1e3*r.currentRetryAttempt:"static"===r.backoffType?r.retryDelay:(Math.pow(2,r.currentRetryAttempt)-1)/2*1e3,e.config.raxConfig.currentRetryAttempt+=1,setTimeout(t,n)}),f=r.onRetryAttempt?Promise.resolve(r.onRetryAttempt(e)):Promise.resolve();return Promise.resolve().then(function(){return o}).then(function(){return f}).then(function(){return r.instance.request(e.config)})}function s(e){var t=e.config.raxConfig;if(!t||0===t.retry)return!1;if(!e.response&&(t.currentRetryAttempt||0)>=t.noResponseRetries)return!1;if(!e.config.method||t.httpMethodsToRetry.indexOf(e.config.method.toUpperCase())<0)return!1;if(e.response&&e.response.status){for(var r=!1,n=0,o=t.statusCodesToRetry;n<o.length;n+=1){var s=o[n],i=e.response.status;if(i>=s[0]&&i<=s[1]){r=!0;break}}if(!r)return!1}return t.currentRetryAttempt=t.currentRetryAttempt||0,!(t.currentRetryAttempt>=t.retry)}function i(e){if(e&&e.config)return e.config.raxConfig}exports.attach=function(e){return(e=e||t).interceptors.response.use(r,o)},exports.detach=function(e,r){(r=r||t).interceptors.response.eject(e)},exports.shouldRetryRequest=s,exports.getConfig=i;
 
 
-},{"axios":41}],94:[function(require,module,exports){
+},{"axios":57}],121:[function(require,module,exports){
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
+/* eslint-disable node/no-deprecated-api */
+var buffer = require('buffer')
+var Buffer = buffer.Buffer
+
+// alternative to using Object.keys for old browsers
+function copyProps (src, dst) {
+  for (var key in src) {
+    dst[key] = src[key]
+  }
+}
+if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
+  module.exports = buffer
+} else {
+  // Copy properties from require('buffer')
+  copyProps(buffer, exports)
+  exports.Buffer = SafeBuffer
+}
+
+function SafeBuffer (arg, encodingOrOffset, length) {
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+SafeBuffer.prototype = Object.create(Buffer.prototype)
+
+// Copy static methods from Buffer
+copyProps(Buffer, SafeBuffer)
+
+SafeBuffer.from = function (arg, encodingOrOffset, length) {
+  if (typeof arg === 'number') {
+    throw new TypeError('Argument must not be a number')
+  }
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+SafeBuffer.alloc = function (size, fill, encoding) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  var buf = Buffer(size)
+  if (fill !== undefined) {
+    if (typeof encoding === 'string') {
+      buf.fill(fill, encoding)
+    } else {
+      buf.fill(fill)
+    }
+  } else {
+    buf.fill(0)
+  }
+  return buf
+}
+
+SafeBuffer.allocUnsafe = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return Buffer(size)
+}
+
+SafeBuffer.allocUnsafeSlow = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return buffer.SlowBuffer(size)
+}
+
+},{"buffer":91}],122:[function(require,module,exports){
 'use strict';
 
 var GetIntrinsic = require('get-intrinsic');
@@ -16187,12 +20301,359 @@ module.exports = function getSideChannel() {
 	return channel;
 };
 
-},{"call-bind/callBound":70,"get-intrinsic":76,"object-inspect":85}],95:[function(require,module,exports){
-const moment = require('moment-timezone')
-const { Client } = require('@helium/http')
-const client = new Client()
+},{"call-bind/callBound":92,"get-intrinsic":99,"object-inspect":112}],123:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.snakeCase = void 0;
+var tslib_1 = require("tslib");
+var dot_case_1 = require("dot-case");
+function snakeCase(input, options) {
+    if (options === void 0) { options = {}; }
+    return dot_case_1.dotCase(input, tslib_1.__assign({ delimiter: "_" }, options));
+}
+exports.snakeCase = snakeCase;
 
-const firstOracle = moment({ year: 2020, month: 05, day: 10 })
+},{"dot-case":96,"tslib":125}],124:[function(require,module,exports){
+'use strict'
+
+const map = require('map-obj')
+const { snakeCase } = require('snake-case')
+
+module.exports = function (obj, options) {
+  options = Object.assign({ deep: true, exclude: [] }, options)
+
+  return map(obj, function (key, val) {
+    return [
+      matches(options.exclude, key) ? key : snakeCase(key),
+      val
+    ]
+  }, options)
+}
+
+function matches (patterns, value) {
+  return patterns.some(function (pattern) {
+    return typeof pattern === 'string'
+      ? pattern === value
+      : pattern.test(value)
+  })
+}
+
+},{"map-obj":106,"snake-case":123}],125:[function(require,module,exports){
+(function (global){(function (){
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global global, define, System, Reflect, Promise */
+var __extends;
+var __assign;
+var __rest;
+var __decorate;
+var __param;
+var __metadata;
+var __awaiter;
+var __generator;
+var __exportStar;
+var __values;
+var __read;
+var __spread;
+var __spreadArrays;
+var __spreadArray;
+var __await;
+var __asyncGenerator;
+var __asyncDelegator;
+var __asyncValues;
+var __makeTemplateObject;
+var __importStar;
+var __importDefault;
+var __classPrivateFieldGet;
+var __classPrivateFieldSet;
+var __createBinding;
+(function (factory) {
+    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
+    if (typeof define === "function" && define.amd) {
+        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
+    }
+    else if (typeof module === "object" && typeof module.exports === "object") {
+        factory(createExporter(root, createExporter(module.exports)));
+    }
+    else {
+        factory(createExporter(root));
+    }
+    function createExporter(exports, previous) {
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
+        }
+        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
+    }
+})
+(function (exporter) {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+
+    __extends = function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+
+    __assign = Object.assign || function (t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+
+    __rest = function (s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    };
+
+    __decorate = function (decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    };
+
+    __param = function (paramIndex, decorator) {
+        return function (target, key) { decorator(target, key, paramIndex); }
+    };
+
+    __metadata = function (metadataKey, metadataValue) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+    };
+
+    __awaiter = function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+
+    __generator = function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (_) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
+
+    __exportStar = function(m, o) {
+        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+    };
+
+    __createBinding = Object.create ? (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    }) : (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+    });
+
+    __values = function (o) {
+        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+        if (m) return m.call(o);
+        if (o && typeof o.length === "number") return {
+            next: function () {
+                if (o && i >= o.length) o = void 0;
+                return { value: o && o[i++], done: !o };
+            }
+        };
+        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    };
+
+    __read = function (o, n) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator];
+        if (!m) return o;
+        var i = m.call(o), r, ar = [], e;
+        try {
+            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        }
+        catch (error) { e = { error: error }; }
+        finally {
+            try {
+                if (r && !r.done && (m = i["return"])) m.call(i);
+            }
+            finally { if (e) throw e.error; }
+        }
+        return ar;
+    };
+
+    /** @deprecated */
+    __spread = function () {
+        for (var ar = [], i = 0; i < arguments.length; i++)
+            ar = ar.concat(__read(arguments[i]));
+        return ar;
+    };
+
+    /** @deprecated */
+    __spreadArrays = function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
+    };
+
+    __spreadArray = function (to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    };
+
+    __await = function (v) {
+        return this instanceof __await ? (this.v = v, this) : new __await(v);
+    };
+
+    __asyncGenerator = function (thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []), i, q = [];
+        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
+        function fulfill(value) { resume("next", value); }
+        function reject(value) { resume("throw", value); }
+        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+    };
+
+    __asyncDelegator = function (o) {
+        var i, p;
+        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+    };
+
+    __asyncValues = function (o) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator], i;
+        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+    };
+
+    __makeTemplateObject = function (cooked, raw) {
+        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+        return cooked;
+    };
+
+    var __setModuleDefault = Object.create ? (function(o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+    }) : function(o, v) {
+        o["default"] = v;
+    };
+
+    __importStar = function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+
+    __importDefault = function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+
+    __classPrivateFieldGet = function (receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    };
+
+    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    };
+
+    exporter("__extends", __extends);
+    exporter("__assign", __assign);
+    exporter("__rest", __rest);
+    exporter("__decorate", __decorate);
+    exporter("__param", __param);
+    exporter("__metadata", __metadata);
+    exporter("__awaiter", __awaiter);
+    exporter("__generator", __generator);
+    exporter("__exportStar", __exportStar);
+    exporter("__createBinding", __createBinding);
+    exporter("__values", __values);
+    exporter("__read", __read);
+    exporter("__spread", __spread);
+    exporter("__spreadArrays", __spreadArrays);
+    exporter("__spreadArray", __spreadArray);
+    exporter("__await", __await);
+    exporter("__asyncGenerator", __asyncGenerator);
+    exporter("__asyncDelegator", __asyncDelegator);
+    exporter("__asyncValues", __asyncValues);
+    exporter("__makeTemplateObject", __makeTemplateObject);
+    exporter("__importStar", __importStar);
+    exporter("__importDefault", __importDefault);
+    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
+    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
+});
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],126:[function(require,module,exports){
+const moment = require('moment-timezone')
+const { Client, Network } = require('@helium/http')
+const client = new Client(Network.production, {options: {retry: 20}})
+
+const firstOracle = moment({ year: 2020, month: 5, day: 10 })
 let warnedFirstOracle = false
 
 const addressTaxes = async (address, year, progress, warning) => {
@@ -16202,41 +20663,53 @@ const addressTaxes = async (address, year, progress, warning) => {
     return await hotspotTaxes(address, year, progress, warning)
   } catch (e) {
     try {
-      // See if this is account address
-      const account = await client.accounts.get(address)
-      const { hotspots } = await account.hotspots.fetchList()
-
-      const withLocation = hotspots.filter(({ lat }) => lat)
-      if (hotspots.length != withLocation.length) {
-        warning('no-location', "At least one hotspot has no location and will be omitted from results")
-      }
-      const rows = await Promise.all(withLocation.map(({ address }) => hotspotTaxes(address, year, progress, warning)))
-      return rows.flat()
+      // See if this is validator address
+      await client.validators.get(address)
+      return await hotspotTaxes(address, year, progress, warning, undefined, true)
     } catch (e) {
-      if (e.response) {
-        warning(`address-${e.response.status}`, "Couldn't find address, use (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
-      }
-      throw (e)
-    }
+      try {
+        // See if this is account address
+        const account = await client.accounts.get(address)
+        const { hotspots } = await account.hotspots.fetchList()
+        const { validators } = await account.validators.fetchList()
 
-    console.log(account)
+        const withLocation = hotspots.filter(({ lat }) => lat)
+        if (hotspots.length !== withLocation.length) {
+          warning('no-location', "At least one hotspot has no location and will be omitted from results")
+        }
+        const hotspotRows = await Promise.all(withLocation.map(({ address }) => hotspotTaxes(address, year, progress, warning)))
+        const validatorRows = await Promise.all(validators.map(({ address }) => hotspotTaxes(address, year, progress, warning, undefined, true)))
+        const rows = hotspotRows.flat()
+        rows.push(...validatorRows.flat())
+        return rows
+      } catch (e) {
+        if (e.response) {
+          warning(`address-${e.response.status}`, "Couldn't find address, use (e.g. a1b2c3d4e5f6..) and not name (e.g. three-funny-words)")
+        }
+        throw (e)
+      }
+    }
   }
 }
 
-const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = []) => {
-  console.log("taxes", hotSpotAddress, year)
-  const hotspot = await client.hotspots.get(hotSpotAddress)
-  const { name, lat, lng } = hotspot
+const hotspotTaxes = async (address, year, progress, warning, rows = [], isValidator) => {
+  console.log("taxes", address, year)
+  const hotspot = isValidator
+      ? await client.validators.get(address)
+      : await client.hotspots.get(address)
 
-  const tzFetch = await fetch(`https://enz4qribbjb5c4.m.pipedream.net?lat=${lat}&lng=${lng}`)
-  const tz = await tzFetch.text()
-  moment.tz.setDefault(tz);
-  console.log("tz", tz)
+  if (!isValidator) {
+    const { lat, lng } = hotspot
+    const tzFetch = await fetch(`https://enz4qribbjb5c4.m.pipedream.net?lat=${lat}&lng=${lng}`)
+    const tz = await tzFetch.text()
+    moment.tz.setDefault(tz);
+    console.log("tz", tz)
+  }
 
   const minTime = year === "All" ? moment(0) : moment({ year })
   const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
-  const getRow = async (data) => {
+  const getRow_ = async (data) => {
     const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
     if (ticker !== "HNT") throw "can't handle " + ticker
 
@@ -16259,14 +20732,26 @@ const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = []) 
       row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
     }
 
-    progress({ hotSpotAddress, hnt: row.hnt, usd: row.usd == '' ? 0 : row.usd })
+    progress({ address, hnt: row.hnt, usd: row.usd === '' ? 0 : row.usd, isValidator })
 
     return row
   }
 
   const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
-  const rewards = client.hotspot(hotSpotAddress).rewards.list(params)
+  const rewards = hotspot.rewards.list(params)
   let page = await rewards
+
+  const getRandomInt = (min, max) => {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  const getRow = async (data) => {
+      const sleepTime = getRandomInt(100,10000)
+      await (new Promise(r => setTimeout(r, sleepTime)))
+      return await getRow_(data)
+  }
   const newRows = await Promise.all(page.data.map(getRow))
   rows.push(...newRows)
 
@@ -16282,4 +20767,5 @@ const hotspotTaxes = async (hotSpotAddress, year, progress, warning, rows = []) 
 }
 
 module.exports = addressTaxes
-},{"@helium/http":15,"moment-timezone":82}]},{},[1]);
+
+},{"@helium/http":21,"moment-timezone":108}]},{},[1]);
