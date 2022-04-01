@@ -1,7 +1,6 @@
 const moment = require('moment-timezone')
 const { Client, Network } = require('@helium/http')
-const client = new Client(Network.production, {options: {retry: 5}})
-const promiseRetry = require('promise-retry');
+const client = new Client(Network.production, {options: {retry: 20}})
 
 const firstOracle = moment({ year: 2020, month: 5, day: 10 })
 let warnedFirstOracle = false
@@ -59,7 +58,7 @@ const hotspotTaxes = async (address, year, progress, warning, rows = [], isValid
   const minTime = year === "All" ? moment(0) : moment({ year })
   const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
-  const getRow = async (data) => {
+  const getRow_ = async (data) => {
     const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
     if (ticker !== "HNT") throw "can't handle " + ticker
 
@@ -90,6 +89,18 @@ const hotspotTaxes = async (address, year, progress, warning, rows = [], isValid
   const params = { minTime: minTime.toDate(), maxTime: maxTime.toDate() }
   const rewards = hotspot.rewards.list(params)
   let page = await rewards
+
+  const getRandomInt = (min, max) => {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  const getRow = async (data) => {
+      const sleepTime = getRandomInt(100,10000)
+      await (new Promise(r => setTimeout(r, sleepTime)))
+      return await getRow_(data)
+  }
   const newRows = await Promise.all(page.data.map(getRow))
   rows.push(...newRows)
 
