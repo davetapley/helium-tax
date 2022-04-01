@@ -1,6 +1,7 @@
 const moment = require('moment-timezone')
-const { Client } = require('@helium/http')
-const client = new Client()
+const { Client, Network } = require('@helium/http')
+const client = new Client(Network.production, {options: {retry: 5}})
+const promiseRetry = require('promise-retry');
 
 const firstOracle = moment({ year: 2020, month: 5, day: 10 })
 let warnedFirstOracle = false

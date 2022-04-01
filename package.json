@@ -10,9 +10,10 @@
     "start": "browserify index.js -o bundle.js"
   },
   "devDependencies": {
-    "@helium/http": "^3.63.0",
+    "@helium/http": "^4.0.0",
     "browserify": "^17.0.0",
     "geo-tz": "^6.0.1",
-    "moment-timezone": "^0.5.33"
+    "moment-timezone": "^0.5.33",
+    "promise-retry": "^2.0.1"
   }
 }
