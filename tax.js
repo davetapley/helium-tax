@@ -5,6 +5,8 @@ const client = new Client(Network.production, {options: {retry: 20}})
 const firstOracle = moment({ year: 2020, month: 5, day: 10 })
 let warnedFirstOracle = false
 
+const getPrice = require('./prices')
+
 const addressTaxes = async (address, year, progress, warning) => {
   try {
     // See if this is hotspot address
@@ -58,31 +60,30 @@ const hotspotTaxes = async (address, year, progress, warning, rows = [], isValid
   const minTime = year === "All" ? moment(0) : moment({ year })
   const maxTime = year === "All" ? moment() : moment({ year }).endOf('year')
 
-  const getRow_ = async (data) => {
+  const getRow = async (data) => {
     const { account, amount: { floatBalance: hnt, type: { ticker } }, block, gateway: hotspot, hash, timestamp } = data
     if (ticker !== "HNT") throw "can't handle " + ticker
 
     const time = moment(timestamp)
 
     let row = {}
-    if (time < firstOracle) {
-      if (!warnedFirstOracle) {
-        warning('no_oracle', `Some rows will not have a USD value because oracle price wasn't available prior to ${firstOracle.format('MMM Do YYYY')}`)
-        warnedFirstOracle = true
-      }
-
-      row = { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
-    } else {
-      const oraclePrice = await client.oracle.getPriceAtBlock(block)
-      const { floatBalance: price, type: { ticker: hntTicker } } = oraclePrice.price
-      if (hntTicker !== "USD") throw "can't handle HNT ticker " + hntTicker
-
-      const usd = hnt * price
+    try {
+      const price = getPrice(block);
+      const usd = hnt * price;
       row = { time: time.format(), usd, hnt, price, account, block, hotspot, hash }
+    } catch (e) {
+      if (e instanceof RangeError) {
+        warning("no_oracle",`Some rows will not have a USD value because oracle price isn't cached`);
+        row = { time: time.format(), usd: '', hnt, price: '', account, block, hotspot, hash }
+      } else {
+          console.log(e)
+          throw e
+      }
     }
 
     progress({ address, hnt: row.hnt, usd: row.usd === '' ? 0 : row.usd, isValidator })
 
+    console.log(row)
     return row
   }
 
@@ -96,15 +97,14 @@ const hotspotTaxes = async (address, year, progress, warning, rows = [], isValid
       return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  const getRow = async (data) => {
-      const sleepTime = getRandomInt(100,10000)
-      await (new Promise(r => setTimeout(r, sleepTime)))
-      return await getRow_(data)
-  }
+  console.log("Start")
   const newRows = await Promise.all(page.data.map(getRow))
   rows.push(...newRows)
 
+  console.log("more")
+  let n = 0
   while (page.hasMore) {
+    console.log("page " + n++)
     page = await page.nextPage()
     const newRows = await Promise.all(page.data.map(getRow))
 
