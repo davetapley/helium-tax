@@ -124531,7 +124531,6 @@ const latestBlock = data[0][0]
 const oldestBlock = data[data.length - 1][0]
 
 const getPrice = (block) => {
-    console.log("getPrice " + block)
     if (block < oldestBlock || block > latestBlock) {
         throw new RangeError("block not in prices.json")
     }
