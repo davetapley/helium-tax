@@ -1,7 +1,7 @@
 const getPrice = require('./prices');
 
 test('block too new', () => {
-  const getNew = () => (getPrice(1300140))
+  const getNew = () => (getPrice(1727203))
   expect(getNew).toThrow("block not in prices.json")
 });
 
