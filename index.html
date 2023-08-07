@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script src="//d2wy8f7a9ursnm.cloudfront.net/v7/bugsnag.min.js"></script>
-    <script>Bugsnag.start({ apiKey: 'dfddd7911807d01ab97a0f21430f8234' })</script>
-    <script
+   <script
       async
       src="https://www.googletagmanager.com/gtag/js?id=G-FGJKFCXXEE"
     ></script>
@@ -24,7 +22,6 @@
     <title>helium-tax</title>
 
     <link rel="stylesheet" href="style.css" />
-    <script src="bundle.js" defer></script>
   </head>
 
   <body>
@@ -33,118 +30,19 @@
     </header>
 
     <main>
-      <div id="tip-float">
-        <p>
-          <b>Tips welcome!</b> If you found this useful tip me some HNT to <br /><code
-            >13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code
-          ><br />
-          or scan this code in the Helium app:
-        </p>
-        <img
-          src="tip-qr.png"
-          alt="13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z"
-        />
-        <p>Or Venmo me <a href="https://www.venmo.com/u/davetapley">@davetapley</a></p>
-      </div>
       <p>
-        Calculate Helium hotspot USD income (useful for taxes,
-        <a
-          href="https://www.irs.gov/irb/2014-16_IRB#NOT-2014-21"
-          target="_blank"
-          >see <b>Q-8</b> here</a
-        >). <br />Uses year as defined by location of hotspot's most recently
-        asserted location.
+        The legacy Helium API which supported this tool was retired July 28 2023.
       </p>
-
-      <p>Will download a .csv whose first two columns are:</p>
-      <ol>
-        <li>
-          Time of reward in time zone of hotspot's most recently asserted
-          location.
-        </li>
-        <li>
-          Rewards in USD as given by
-          <a
-            href="https://engineering.helium.com/2020/05/29/HNT-Price-Oracles.html#hnt-price-oracles"
-            >HNT oracle price</a
-          >
-          at time of reward.
-        </li>
-      </ol>
-
       <p>
-        Enter your hotspot or account/wallet address (<i
-          ><a href="https://explorer.helium.com/hotspots" target="_blank"
-            >find it here</a
-          >):
-        </i>
+        See <a
+          href="https://docs.helium.com/devblog/2023/07/19/legacy-api-shutdown/"
+          target="_blank"
+          >here</a>
+          for more information.
       </p>
-
-      <form>
-        <input
-          name="address"
-          type="text"
-          maxlength="100"
-          required
-          placeholder="Hotspot or account/wallet address"
-        />
-        <select name="year">
-          <option value="2020">2020</option>
-          <option value="2021">2021</option>
-          <option value="2022">2022</option>
-        </select>
-        <button type="submit" name="submit">Do some taxes</button>
-      </form>
-
-      <div id="progress">
-        <div class="loader"></div>
-        <span id="current"></span>
-      </div>
-
-      <div>
-        <ul id="warning"></ul>
-      </div>
-
-      <p id="tip-block">
-        <b>Tips welcome!</b> If you found this useful tip me some HNT to <br /><code
-          >13ZZFMfMKQCmHxGAkQChPDXb39R4tsqCm8TogY85KV4Ndi34F7Z</code
-        >.
-        <br>Or Venmo me <a href="https://www.venmo.com/u/davetapley">@davetapley</a>
-      </p>
-
       <p>
-        Looking for EUR or other currency?
-        <a
-          href="https://github.com/davetapley/helium-tax/discussions/61#discussioncomment-1975214"
-          target="_blank"
-          >See here</a
-        >.
+        I will not be updating this tool to use Solana-backed API.
       </p>
-      
-      <p>
-        Not working?
-        <a
-          href="https://status.helium.com/"
-          target="_blank"
-          >Check the Helium status page</a
-        >/ 
-        <a
-          href="https://github.com/davetapley/helium-tax/discussions/86#discussioncomment-2564968"
-          target="_blank"
-          >check for a firewall</a
-        >.
-      </p>
-
-      <p>
-        Questions, comments, issues? Please ask
-        <a
-          href="https://github.com/davetapley/helium-tax/discussions"
-          target="_blank"
-          >here</a
-        >.
-      </p>
-
-      <a id="bugsnag" href="" target="_blank"><img src="bugsnag.png" alt="Bugsnag"/></a>
     </main>
 
     <footer>
