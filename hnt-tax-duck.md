@@ -82,8 +82,8 @@ CREATE TABLE hnt_usd AS SELECT "Date" AS date, ("High" + "Low") / 2 AS price FRO
 Join prices with your rewards:
 
 ```sql
-CREATE VIEW iot_usd_rewards AS SELECT time, amount, price, amount * price AS usd FROM iot_rewards ASOF JOIN iot_usd ON time > date;
-CREATE VIEW hnt_usd_rewards AS SELECT time, amount, price, amount * price AS usd FROM hnt_rewards ASOF JOIN hnt_usd ON time > date;
+CREATE VIEW iot_usd_rewards AS SELECT time, amount, price, amount * price AS usd FROM iot_rewards ASOF JOIN iot_usd ON time >= date;
+CREATE VIEW hnt_usd_rewards AS SELECT time, amount, price, amount * price AS usd FROM hnt_rewards ASOF JOIN hnt_usd ON time >= date;
 ```
 
 Summarize your rewards in USD:
