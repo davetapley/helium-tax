@@ -57,8 +57,8 @@ CREATE VIEW hnt_rewards AS SELECT time, amount FROM rewards WHERE token = 'hnt';
 For a sanity check verify no overlap on the [HNT to IOT migration](https://docs.helium.com/solana/migration/hotspot-operator/) on April 18, 2023:
 
 ```sql
-SELECT max(time) FROM hnt_usd_rewards;
-SELECT min(time) FROM iot_usd_rewards;
+SELECT max(time) FROM hnt_rewards;
+SELECT min(time) FROM iot_rewards;
 ```
 
 You should see e.g. `2023-04-18 09:28:25-07` and `2023-04-24 17:00:00-07` (times may vary, dates should be same / close).
