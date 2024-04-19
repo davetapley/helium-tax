@@ -15,11 +15,16 @@ I'm not affiliated with Hotspotty, but I found it is [cheapest](https://app.hots
 
 Download [duckdb](https://duckdb.org/docs/installation/?version=stable) command line tool (free).
 
-Open a terminal / command prompt and `cd` to the folder where you downloaded `rewards.csv` and `duckdb`.
+Open a terminal / command prompt and `cd` to the folder where you unzipped `duckdb` (`duckdb.exe` on Windows).
 
-Run:
+Run (Mac / Linux):
 ```bash
 ./duckdb rewards.db
+```
+
+Run (Windows)
+```
+./duckdb.exe rewards.db
 ```
 
 ### Get transactions in to database
