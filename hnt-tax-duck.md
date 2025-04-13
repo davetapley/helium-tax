@@ -42,8 +42,8 @@ CREATE TABLE rewards AS SELECT Token AS token, to_timestamp("Start Date") AS tim
 Filter date to your local time zone (since hotspotty exports in UTC, and `duckdb` will use your local zone):
 
 ```sql
-DELETE FROM rewards WHERE time < '2023-01-01';
-DELETE FROM rewards WHERE time >= '2024-01-01';
+DELETE FROM rewards WHERE time < '2024-01-01';
+DELETE FROM rewards WHERE time >= '2025-01-01';
 ```
 
 Verify which tokens you have:
