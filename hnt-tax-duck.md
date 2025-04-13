@@ -52,53 +52,39 @@ Verify which tokens you have:
 SELECT distinct(token) FROM rewards;
 ```
 
-For tax year **2023** only: I will assume you see `HNT` and `IOT` in the output, split on those:
+For tax year **2024** only: You should have only `IOT` in the output. If otherwise please see [previous the version of this document](https://github.com/davetapley/helium-tax/blob/3b9228b054f8cfdc633570edc3e5592e750146eb/hnt-tax-duck.md).
 
-```sql
-CREATE VIEW iot_rewards AS SELECT time, amount FROM rewards WHERE token = 'iot';
-CREATE VIEW hnt_rewards AS SELECT time, amount FROM rewards WHERE token = 'hnt';
-```
-
-For a sanity check verify no overlap on the [HNT to IOT migration](https://docs.helium.com/solana/migration/hotspot-operator/) on April 18, 2023:
-
-```sql
-SELECT max(time) FROM hnt_rewards;
-SELECT min(time) FROM iot_rewards;
-```
-
-You should see e.g. `2023-04-18 09:28:25-07` and `2023-04-24 17:00:00-07` (times may vary, dates should be same / close).
 
 
 ### Get price data in to database
 
-Download price data:
-* If you have HNT (i.e. tax year 2023): https://finance.yahoo.com/quote/HNT-USD/history/?period1=1672531200&period2=1703980800
-* https://finance.yahoo.com/quote/IOT-USD/history/?period1=1672531200&period2=1703980800
+Download price data as csv (via ↓ icon on far right of header):
 
-Move the downloaded `HNT-USD.csv` and `IOT-USD.csv` to the same folder as `rewards.csv` and `duckdb`.
+https://www.coingecko.com/en/coins/helium-iot/historical_data
+
+Move the downloaded `iot-usd-max.csv` to the same folder as `rewards.csv` and `duckdb`.
 
 Import in to database:
 
 ```sql
-CREATE TABLE iot_usd AS SELECT "Date" AS date, ("High" + "Low") / 2 AS price FROM read_csv_auto('IOT-USD.csv');
-CREATE TABLE hnt_usd AS SELECT "Date" AS date, ("High" + "Low") / 2 AS price FROM read_csv_auto('HNT-USD.csv');
+CREATE TABLE iot_usd AS SELECT snapped_at AS date, price FROM read_csv_auto('iot-usd-max.csv');
+
+DELETE FROM iot_usd WHERE extract('year' FROM date) <> 2024;
 ```
 
 Join prices with your rewards:
 
 ```sql
-CREATE VIEW iot_usd_rewards AS SELECT time, amount * price AS usd FROM iot_rewards ASOF JOIN iot_usd ON time >= date;
-CREATE VIEW hnt_usd_rewards AS SELECT time, amount * price AS usd FROM hnt_rewards ASOF JOIN hnt_usd ON time >= date;
+CREATE VIEW usd_rewards AS SELECT time, amount * price AS usd FROM rewards ASOF JOIN iot_usd ON time >= date;
 ```
 
 Summarize your rewards in USD:
 
 ```sql
-SELECT sum(usd) FROM iot_usd_rewards;
-SELECT sum(usd) FROM hnt_usd_rewards;
+SELECT sum(usd) FROM usd_rewards;
 ```
 
-Add these two numbers together to get your total rewards in USD in 2023.
+This number is your total rewards in USD in 2024.
 
 You are done.
 
