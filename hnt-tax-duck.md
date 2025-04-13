@@ -52,7 +52,7 @@ Verify which tokens you have:
 SELECT distinct(token) FROM rewards;
 ```
 
-I will assume you see `HNT` and `IOT` in the output, split on those:
+For tax year **2023** only: I will assume you see `HNT` and `IOT` in the output, split on those:
 
 ```sql
 CREATE VIEW iot_rewards AS SELECT time, amount FROM rewards WHERE token = 'iot';
@@ -72,7 +72,7 @@ You should see e.g. `2023-04-18 09:28:25-07` and `2023-04-24 17:00:00-07` (times
 ### Get price data in to database
 
 Download price data:
-* https://finance.yahoo.com/quote/HNT-USD/history/?period1=1672531200&period2=1703980800
+* If you have HNT (i.e. tax year 2023): https://finance.yahoo.com/quote/HNT-USD/history/?period1=1672531200&period2=1703980800
 * https://finance.yahoo.com/quote/IOT-USD/history/?period1=1672531200&period2=1703980800
 
 Move the downloaded `HNT-USD.csv` and `IOT-USD.csv` to the same folder as `rewards.csv` and `duckdb`.
