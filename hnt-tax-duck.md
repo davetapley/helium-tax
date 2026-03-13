@@ -29,7 +29,7 @@ Run (Windows)
 
 ### Get transactions in to database
 
-[Export your data](https://docs.hotspotty.net/features/payment-management/tax-reporting) in Hotspotty, choosing date range Jan 1 2023 to Jan 1 2024 (we will filter to correct time zone later, this is to ensure we get everything, as Hotspotty uses UTC time).
+[Export your data](https://docs.hotspotty.net/features/payment-management/tax-reporting) in Hotspotty, choosing date range Jan 1 2025 to Jan 1 2026 (we will filter to correct time zone later, this is to ensure we get everything, as Hotspotty uses UTC time).
 
 Download the CSV file, rename it to `rewards.csv` and move it to where you unzipped the `duckdb` to.
 
@@ -39,11 +39,10 @@ Import `rewards.csv` into the database:
 CREATE TABLE rewards AS SELECT Token AS token, to_timestamp("Start Date") AS time, Amount AS amount FROM read_csv_auto('rewards.csv');
 ```
 
-Filter date to your local time zone (since hotspotty exports in UTC, and `duckdb` will use your local zone):
+Filter date to 2025:
 
 ```sql
-DELETE FROM rewards WHERE time < '2024-01-01';
-DELETE FROM rewards WHERE time >= '2025-01-01';
+DELETE FROM rewards WHERE extract('year' FROM time) <> 2025;
 ```
 
 Verify which tokens you have:
@@ -52,39 +51,46 @@ Verify which tokens you have:
 SELECT distinct(token) FROM rewards;
 ```
 
-For tax year **2024** only: You should have only `IOT` in the output. If otherwise please see [previous the version of this document](https://github.com/davetapley/helium-tax/blob/3b9228b054f8cfdc633570edc3e5592e750146eb/hnt-tax-duck.md).
+For tax year **2025** only: You will have both `IOT` and `HNT` in the output due to [HIP 138](https://blog.helium.com/hnt-returns-implementation-updates-and-community-q-a-on-hip-138-334aef394f48).
 
 
 
 ### Get price data in to database
 
-Download price data as csv (via ↓ icon on far right of header):
+Download price data for IOT and HNT as csv (via ↓ icon on far right of header):
 
 https://www.coingecko.com/en/coins/helium-iot/historical_data
+https://www.coingecko.com/en/coins/helium/historical_data
 
-Move the downloaded `iot-usd-max.csv` to the same folder as `rewards.csv` and `duckdb`.
+
+Move the downloaded `iot-usd-max.csv` and  `hnt-usd-max.csv`  to the same folder as `rewards.csv` and `duckdb`.
 
 Import in to database:
 
 ```sql
 CREATE TABLE iot_usd AS SELECT snapped_at AS date, price FROM read_csv_auto('iot-usd-max.csv');
+CREATE TABLE hnt_usd AS SELECT snapped_at AS date, price FROM read_csv_auto('hnt-usd-max.csv');
 
-DELETE FROM iot_usd WHERE extract('year' FROM date) <> 2024;
+
+DELETE FROM iot_usd WHERE extract('year' FROM date) <> 2025;
+DELETE FROM hnt_usd WHERE extract('year' FROM date) <> 2025;
 ```
 
-Join prices with your rewards:
+Join prices for each token with your rewards:
 
 ```sql
-CREATE VIEW usd_rewards AS SELECT time, amount * price AS usd FROM rewards ASOF JOIN iot_usd ON time >= date;
+CREATE VIEW iot_usd_rewards AS SELECT time, amount * price AS usd FROM rewards ASOF JOIN iot_usd ON time >= date WHERE token = iot';
+CREATE VIEW hnt_usd_rewards AS SELECT time, amount * price AS usd FROM rewards ASOF JOIN hnt_usd ON time >= date WHERE token = 'hnt';
 ```
 
 Summarize your rewards in USD:
 
 ```sql
-SELECT sum(usd) FROM usd_rewards;
+SELECT sum(usd) FROM iot_usd_rewards;
+SELECT sum(usd) FROM hnt_usd_rewards;
 ```
 
-This number is your total rewards in USD in 2024.
+Add these numbers for your total rewards in USD in 2025.
 
 You are done.
 
